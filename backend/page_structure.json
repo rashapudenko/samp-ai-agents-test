@@ -1,0 +1,151 @@
+{
+    "title": "Vulnerability DB | Snyk",
+    "vulnerability_count": null,
+    "sample_vulnerability": {
+        "raw_html": "<tr class=\"table__row\" data-v-23272b92=\"\"><!--[--><td class=\"table__data-cell--first-row table__data-cell--first-column table__data-cell\" data-v-23272b92=\"\"><!--[--><ul class=\"severity--compact severity base-severity\" data-v-14a406aa=\"\" data-v-9dcfe1f0=\"\" show-critical-severity=\"true\"><!--[--><!--[--><!-- --><!-- --><!--]--><!--[--><li class=\"severity__item--high severity__item\" data-v-14a406aa=\"\"><!-- --><abbr class=\"severity__text\" data-v-14a406aa=\"\" title=\"high issue\"><!-- --> H</abbr></li><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--]--></ul><a class=\"anchor anchor--underline anchor--default\" data-snyk-cy-test=\"vuln table title\" data-snyk-test=\"Deserialization of Untrusted Data\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/vuln/SNYK-PYTHON-VLLM-9513025\"><!-- --><!-- --><!--[-->Deserialization of Untrusted Data<!--]--><!-- --><!-- --><!-- --></a><!--]--></td><td class=\"table__data-cell--first-row table__data-cell\" data-v-23272b92=\"\"><!--[--><a class=\"anchor anchor--underline anchor--default\" data-snyk-test=\"vllm\" data-snyk-test-package-manager=\"pip\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/package/pip/vllm\"><!-- --><!-- --><!--[-->vllm<!--]--><!-- --><!-- --><!-- --></a><!--[--><span class=\"vulns-table__semver\" data-v-9dcfe1f0=\"\">[0,]</span><!--]--><!--]--></td><td class=\"table__data-cell--first-row table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"25 Mar 2025\" type=\"pip\">pip</span><!--]--></td><td class=\"table__data-cell--first-row table__data-cell--last-column table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"25 Mar 2025\" type=\"pip\">25 Mar 2025</span><!--]--></td><!--]--></tr>",
+        "class_table__data-cell--first-row table__data-cell--first-column table__data-cell": "HDeserialization of Untrusted Data",
+        "class_severity--compact severity base-severity": "H",
+        "class_severity__item--high severity__item": "H",
+        "class_severity__text": "H",
+        "class_anchor anchor--underline anchor--default": "vllm",
+        "class_table__data-cell--first-row table__data-cell": "pip",
+        "class_vulns-table__semver": "[0,]",
+        "class_table__data-cell--first-row table__data-cell--last-column table__data-cell": "25 Mar 2025",
+        "data-v-23272b92": "",
+        "links": [
+            {
+                "href": "/vuln/SNYK-PYTHON-VLLM-9513025",
+                "text": "Deserialization of Untrusted Data"
+            },
+            {
+                "href": "/package/pip/vllm",
+                "text": "vllm"
+            }
+        ]
+    },
+    "pagination_info": {
+        "selector": ".pagination",
+        "html": "<div class=\"pagination\" data-v-1668d786=\"\" data-v-b145681c=\"\"><!-- --><a class=\"anchor anchor--underline anchor--default next\" data-snyk-test=\"Pagination: next button\" data-v-9c2a2d23=\"\" data-v-b145681c=\"\" href=\"/vuln/pip/2\"><!-- --><!-- --><!--[--> Next <!--]--><!-- --><!-- --><!-- --></a></div>",
+        "links": [
+            {
+                "href": "/vuln/pip/2",
+                "text": "Next"
+            }
+        ]
+    },
+    "selectors": {
+        "vulnerability_item": ".vulns-table tbody tr"
+    },
+    "vulnerabilities": [
+        {
+            "raw_html": "<tr class=\"table__row\" data-v-23272b92=\"\"><!--[--><td class=\"table__data-cell--first-row table__data-cell--first-column table__data-cell\" data-v-23272b92=\"\"><!--[--><ul class=\"severity--compact severity base-severity\" data-v-14a406aa=\"\" data-v-9dcfe1f0=\"\" show-critical-severity=\"true\"><!--[--><!--[--><!-- --><!-- --><!--]--><!--[--><li class=\"severity__item--high severity__item\" data-v-14a406aa=\"\"><!-- --><abbr class=\"severity__text\" data-v-14a406aa=\"\" title=\"high issue\"><!-- --> H</abbr></li><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--]--></ul><a class=\"anchor anchor--underline anchor--default\" data-snyk-cy-test=\"vuln table title\" data-snyk-test=\"Deserialization of Untrusted Data\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/vuln/SNYK-PYTHON-VLLM-9513025\"><!-- --><!-- --><!--[-->Deserialization of Untrusted Data<!--]--><!-- --><!-- --><!-- --></a><!--]--></td><td class=\"table__data-cell--first-row table__data-cell\" data-v-23272b92=\"\"><!--[--><a class=\"anchor anchor--underline anchor--default\" data-snyk-test=\"vllm\" data-snyk-test-package-manager=\"pip\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/package/pip/vllm\"><!-- --><!-- --><!--[-->vllm<!--]--><!-- --><!-- --><!-- --></a><!--[--><span class=\"vulns-table__semver\" data-v-9dcfe1f0=\"\">[0,]</span><!--]--><!--]--></td><td class=\"table__data-cell--first-row table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"25 Mar 2025\" type=\"pip\">pip</span><!--]--></td><td class=\"table__data-cell--first-row table__data-cell--last-column table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"25 Mar 2025\" type=\"pip\">25 Mar 2025</span><!--]--></td><!--]--></tr>",
+            "class_table__data-cell--first-row table__data-cell--first-column table__data-cell": "HDeserialization of Untrusted Data",
+            "class_severity--compact severity base-severity": "H",
+            "class_severity__item--high severity__item": "H",
+            "class_severity__text": "H",
+            "class_anchor anchor--underline anchor--default": "vllm",
+            "class_table__data-cell--first-row table__data-cell": "pip",
+            "class_vulns-table__semver": "[0,]",
+            "class_table__data-cell--first-row table__data-cell--last-column table__data-cell": "25 Mar 2025",
+            "data-v-23272b92": "",
+            "links": [
+                {
+                    "href": "/vuln/SNYK-PYTHON-VLLM-9513025",
+                    "text": "Deserialization of Untrusted Data"
+                },
+                {
+                    "href": "/package/pip/vllm",
+                    "text": "vllm"
+                }
+            ]
+        },
+        {
+            "raw_html": "<tr class=\"table__row\" data-v-23272b92=\"\"><!--[--><td class=\"table__data-cell--first-column table__data-cell\" data-v-23272b92=\"\"><!--[--><ul class=\"severity--compact severity base-severity\" data-v-14a406aa=\"\" data-v-9dcfe1f0=\"\" show-critical-severity=\"true\"><!--[--><!--[--><li class=\"severity__item--critical severity__item\" data-v-14a406aa=\"\"><!-- --><abbr class=\"severity__text\" data-v-14a406aa=\"\" title=\"critical issue\"><!-- --> C</abbr></li><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--]--></ul><a class=\"anchor anchor--underline anchor--default\" data-snyk-cy-test=\"vuln table title\" data-snyk-test=\"Deserialization of Untrusted Data\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/vuln/SNYK-PYTHON-VLLM-9513024\"><!-- --><!-- --><!--[-->Deserialization of Untrusted Data<!--]--><!-- --><!-- --><!-- --></a><!--]--></td><td class=\"table__data-cell\" data-v-23272b92=\"\"><!--[--><a class=\"anchor anchor--underline anchor--default\" data-snyk-test=\"vllm\" data-snyk-test-package-manager=\"pip\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/package/pip/vllm\"><!-- --><!-- --><!--[-->vllm<!--]--><!-- --><!-- --><!-- --></a><!--[--><span class=\"vulns-table__semver\" data-v-9dcfe1f0=\"\">[,0.6.2)</span><!--]--><!--]--></td><td class=\"table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"25 Mar 2025\" type=\"pip\">pip</span><!--]--></td><td class=\"table__data-cell--last-column table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"25 Mar 2025\" type=\"pip\">25 Mar 2025</span><!--]--></td><!--]--></tr>",
+            "class_table__data-cell--first-column table__data-cell": "CDeserialization of Untrusted Data",
+            "class_severity--compact severity base-severity": "C",
+            "class_severity__item--critical severity__item": "C",
+            "class_severity__text": "C",
+            "class_anchor anchor--underline anchor--default": "vllm",
+            "class_table__data-cell": "pip",
+            "class_vulns-table__semver": "[,0.6.2)",
+            "class_table__data-cell--last-column table__data-cell": "25 Mar 2025",
+            "data-v-23272b92": "",
+            "links": [
+                {
+                    "href": "/vuln/SNYK-PYTHON-VLLM-9513024",
+                    "text": "Deserialization of Untrusted Data"
+                },
+                {
+                    "href": "/package/pip/vllm",
+                    "text": "vllm"
+                }
+            ]
+        },
+        {
+            "raw_html": "<tr class=\"table__row\" data-v-23272b92=\"\"><!--[--><td class=\"table__data-cell--first-column table__data-cell\" data-v-23272b92=\"\"><!--[--><ul class=\"severity--compact severity base-severity\" data-v-14a406aa=\"\" data-v-9dcfe1f0=\"\" show-critical-severity=\"true\"><!--[--><!--[--><li class=\"severity__item--critical severity__item\" data-v-14a406aa=\"\"><!-- --><abbr class=\"severity__text\" data-v-14a406aa=\"\" title=\"critical issue\"><!-- --> C</abbr></li><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--]--></ul><a class=\"anchor anchor--underline anchor--default\" data-snyk-cy-test=\"vuln table title\" data-snyk-test=\"Deserialization of Untrusted Data\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/vuln/SNYK-PYTHON-VLLM-9513023\"><!-- --><!-- --><!--[-->Deserialization of Untrusted Data<!--]--><!-- --><!-- --><!-- --></a><!--]--></td><td class=\"table__data-cell\" data-v-23272b92=\"\"><!--[--><a class=\"anchor anchor--underline anchor--default\" data-snyk-test=\"vllm\" data-snyk-test-package-manager=\"pip\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/package/pip/vllm\"><!-- --><!-- --><!--[-->vllm<!--]--><!-- --><!-- --><!-- --></a><!--[--><span class=\"vulns-table__semver\" data-v-9dcfe1f0=\"\">[0,]</span><!--]--><!--]--></td><td class=\"table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"25 Mar 2025\" type=\"pip\">pip</span><!--]--></td><td class=\"table__data-cell--last-column table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"25 Mar 2025\" type=\"pip\">25 Mar 2025</span><!--]--></td><!--]--></tr>",
+            "class_table__data-cell--first-column table__data-cell": "CDeserialization of Untrusted Data",
+            "class_severity--compact severity base-severity": "C",
+            "class_severity__item--critical severity__item": "C",
+            "class_severity__text": "C",
+            "class_anchor anchor--underline anchor--default": "vllm",
+            "class_table__data-cell": "pip",
+            "class_vulns-table__semver": "[0,]",
+            "class_table__data-cell--last-column table__data-cell": "25 Mar 2025",
+            "data-v-23272b92": "",
+            "links": [
+                {
+                    "href": "/vuln/SNYK-PYTHON-VLLM-9513023",
+                    "text": "Deserialization of Untrusted Data"
+                },
+                {
+                    "href": "/package/pip/vllm",
+                    "text": "vllm"
+                }
+            ]
+        },
+        {
+            "raw_html": "<tr class=\"table__row\" data-v-23272b92=\"\"><!--[--><td class=\"table__data-cell--first-column table__data-cell\" data-v-23272b92=\"\"><!--[--><ul class=\"severity--compact severity base-severity\" data-v-14a406aa=\"\" data-v-9dcfe1f0=\"\" show-critical-severity=\"true\"><!--[--><!--[--><!-- --><!-- --><!--]--><!--[--><li class=\"severity__item--high severity__item\" data-v-14a406aa=\"\"><!-- --><abbr class=\"severity__text\" data-v-14a406aa=\"\" title=\"high issue\"><!-- --> H</abbr></li><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--]--></ul><a class=\"anchor anchor--underline anchor--default\" data-snyk-cy-test=\"vuln table title\" data-snyk-test=\"Directory Traversal\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/vuln/SNYK-PYTHON-AGENTSCOPE-9511413\"><!-- --><!-- --><!--[-->Directory Traversal<!--]--><!-- --><!-- --><!-- --></a><!--]--></td><td class=\"table__data-cell\" data-v-23272b92=\"\"><!--[--><a class=\"anchor anchor--underline anchor--default\" data-snyk-test=\"agentscope\" data-snyk-test-package-manager=\"pip\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/package/pip/agentscope\"><!-- --><!-- --><!--[-->agentscope<!--]--><!-- --><!-- --><!-- --></a><!--[--><span class=\"vulns-table__semver\" data-v-9dcfe1f0=\"\">[0,]</span><!--]--><!--]--></td><td class=\"table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"24 Mar 2025\" type=\"pip\">pip</span><!--]--></td><td class=\"table__data-cell--last-column table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"24 Mar 2025\" type=\"pip\">24 Mar 2025</span><!--]--></td><!--]--></tr>",
+            "class_table__data-cell--first-column table__data-cell": "HDirectory Traversal",
+            "class_severity--compact severity base-severity": "H",
+            "class_severity__item--high severity__item": "H",
+            "class_severity__text": "H",
+            "class_anchor anchor--underline anchor--default": "agentscope",
+            "class_table__data-cell": "pip",
+            "class_vulns-table__semver": "[0,]",
+            "class_table__data-cell--last-column table__data-cell": "24 Mar 2025",
+            "data-v-23272b92": "",
+            "links": [
+                {
+                    "href": "/vuln/SNYK-PYTHON-AGENTSCOPE-9511413",
+                    "text": "Directory Traversal"
+                },
+                {
+                    "href": "/package/pip/agentscope",
+                    "text": "agentscope"
+                }
+            ]
+        },
+        {
+            "raw_html": "<tr class=\"table__row\" data-v-23272b92=\"\"><!--[--><td class=\"table__data-cell--first-column table__data-cell\" data-v-23272b92=\"\"><!--[--><ul class=\"severity--compact severity base-severity\" data-v-14a406aa=\"\" data-v-9dcfe1f0=\"\" show-critical-severity=\"true\"><!--[--><!--[--><!-- --><!-- --><!--]--><!--[--><li class=\"severity__item--high severity__item\" data-v-14a406aa=\"\"><!-- --><abbr class=\"severity__text\" data-v-14a406aa=\"\" title=\"high issue\"><!-- --> H</abbr></li><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--[--><!-- --><!-- --><!--]--><!--]--></ul><a class=\"anchor anchor--underline anchor--default\" data-snyk-cy-test=\"vuln table title\" data-snyk-test=\"Directory Traversal\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/vuln/SNYK-PYTHON-AGENTSCOPE-9511412\"><!-- --><!-- --><!--[-->Directory Traversal<!--]--><!-- --><!-- --><!-- --></a><!--]--></td><td class=\"table__data-cell\" data-v-23272b92=\"\"><!--[--><a class=\"anchor anchor--underline anchor--default\" data-snyk-test=\"agentscope\" data-snyk-test-package-manager=\"pip\" data-v-9c2a2d23=\"\" data-v-9dcfe1f0=\"\" href=\"/package/pip/agentscope\"><!-- --><!-- --><!--[-->agentscope<!--]--><!-- --><!-- --><!-- --></a><!--[--><span class=\"vulns-table__semver\" data-v-9dcfe1f0=\"\">[0,]</span><!--]--><!--]--></td><td class=\"table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"24 Mar 2025\" type=\"pip\">pip</span><!--]--></td><td class=\"table__data-cell--last-column table__data-cell\" data-v-23272b92=\"\"><!--[--><span data-v-23272b92=\"\" published=\"24 Mar 2025\" type=\"pip\">24 Mar 2025</span><!--]--></td><!--]--></tr>",
+            "class_table__data-cell--first-column table__data-cell": "HDirectory Traversal",
+            "class_severity--compact severity base-severity": "H",
+            "class_severity__item--high severity__item": "H",
+            "class_severity__text": "H",
+            "class_anchor anchor--underline anchor--default": "agentscope",
+            "class_table__data-cell": "pip",
+            "class_vulns-table__semver": "[0,]",
+            "class_table__data-cell--last-column table__data-cell": "24 Mar 2025",
+            "data-v-23272b92": "",
+            "links": [
+                {
+                    "href": "/vuln/SNYK-PYTHON-AGENTSCOPE-9511412",
+                    "text": "Directory Traversal"
+                },
+                {
+                    "href": "/package/pip/agentscope",
+                    "text": "agentscope"
+                }
+            ]
+        }
+    ]
+}
