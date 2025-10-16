@@ -1,0 +1,68 @@
+version: 3
+projects:
+  - name: dev
+    dir: terraform
+    workspace: default
+    autoplan:
+      enabled: true
+      when_modified: ["**/*.tf", "**/*.tfvars", "**/*.json"]
+    terraform_version: v1.6.0
+    apply_requirements: [mergeable]
+    workflow: dev-workflow
+
+  - name: staging
+    dir: terraform
+    workspace: default
+    autoplan:
+      enabled: false
+      when_modified: ["**/*.tf", "**/*.tfvars", "**/*.json"]
+    terraform_version: v1.6.0
+    apply_requirements: [approved, mergeable]
+    workflow: staging-workflow
+
+  - name: prod
+    dir: terraform
+    workspace: default
+    autoplan:
+      enabled: false
+      when_modified: ["**/*.tf", "**/*.tfvars", "**/*.json"]
+    terraform_version: v1.6.0
+    apply_requirements: [approved, mergeable]
+    workflow: prod-workflow
+
+workflows:
+  dev-workflow:
+    plan:
+      steps:
+        - init:
+            extra_args: ["-backend-config=environments/dev/backend.tfvars"]
+        - plan:
+            extra_args: ["-var-file=environments/dev/dev.tfvars"]
+    apply:
+      steps:
+        - apply:
+            extra_args: ["-var-file=environments/dev/dev.tfvars"]
+
+  staging-workflow:
+    plan:
+      steps:
+        - init:
+            extra_args: ["-backend-config=environments/staging/backend.tfvars"]
+        - plan:
+            extra_args: ["-var-file=environments/staging/staging.tfvars"]
+    apply:
+      steps:
+        - apply:
+            extra_args: ["-var-file=environments/staging/staging.tfvars"]
+
+  prod-workflow:
+    plan:
+      steps:
+        - init:
+            extra_args: ["-backend-config=environments/prod/backend.tfvars"]
+        - plan:
+            extra_args: ["-var-file=environments/prod/prod.tfvars"]
+    apply:
+      steps:
+        - apply:
+            extra_args: ["-var-file=environments/prod/prod.tfvars"]
