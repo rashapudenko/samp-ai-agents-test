@@ -24,7 +24,7 @@ const Message: React.FC<MessageProps> = ({ role, content, sources }) => {
               <span className="text-sm font-medium">U</span>
             </div>
           ) : (
-            <div className="bg-gray-700 text-white h-8 w-8 rounded-full flex items-center justify-center">
+            <div className="bg-gray-600 text-white h-8 w-8 rounded-full flex items-center justify-center">
               <span className="text-sm font-medium">A</span>
             </div>
           )}
