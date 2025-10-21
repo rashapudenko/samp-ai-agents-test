@@ -6,6 +6,7 @@ import { Vulnerability } from '../../services/api';
 import Card from '../ui/Card';
 import SeverityBadge from '../ui/SeverityBadge';
 
+//TODO review this interface
 export interface MessageProps {
   id: string;
   role: 'user' | 'assistant' | 'system';
