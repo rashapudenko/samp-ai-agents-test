@@ -1,0 +1,37 @@
+{{- if .Values.backend.persistence.data.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "vuln-kb.fullname" . }}-backend-data
+  labels:
+    {{- include "vuln-kb.backend.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.backend.persistence.data.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.backend.persistence.data.size }}
+  {{- if or .Values.backend.persistence.data.storageClass .Values.global.storageClass }}
+  storageClassName: {{ .Values.backend.persistence.data.storageClass | default .Values.global.storageClass }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.backend.persistence.logs.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "vuln-kb.fullname" . }}-backend-logs
+  labels:
+    {{- include "vuln-kb.backend.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.backend.persistence.logs.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.backend.persistence.logs.size }}
+  {{- if or .Values.backend.persistence.logs.storageClass .Values.global.storageClass }}
+  storageClassName: {{ .Values.backend.persistence.logs.storageClass | default .Values.global.storageClass }}
+  {{- end }}
+{{- end }}

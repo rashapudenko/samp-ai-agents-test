@@ -1,0 +1,219 @@
+# Default values for vuln-kb chart
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Backend application configuration
+backend:
+  image:
+    repository: vuln-kb-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  replicaCount: 1
+  
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+    annotations: {}
+  
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: vuln-kb-api.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  
+  # Resource limits and requests
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+  
+  # Pod security context
+  podSecurityContext:
+    fsGroup: 1000
+    runAsUser: 1000
+    runAsGroup: 1000
+  
+  # Environment variables
+  env:
+    API_HOST: "0.0.0.0"
+    API_PORT: "8000"
+    API_PREFIX: "/api"
+    PYTHONUNBUFFERED: "1"
+    PYTHONDONTWRITEBYTECODE: "1"
+    DATABASE_PATH: "app/data/vulnerabilities.db"
+    VECTOR_DB_PATH: "app/data/vector_db"
+    SNYK_BASE_URL: "https://security.snyk.io/vuln/pip/"
+    SCRAPER_PAGES_TO_FETCH: "10"
+    WORKERS: "1"
+  
+  # Secret environment variables (from secrets)
+  secretEnv:
+    AZURE_OPENAI_API_KEY: ""
+    AZURE_OPENAI_ENDPOINT: ""
+    AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT: "text-embedding-ada-002"
+    AZURE_OPENAI_COMPLETIONS_DEPLOYMENT: "gpt-4o"
+  
+  # Persistent volumes
+  persistence:
+    data:
+      enabled: true
+      storageClass: ""
+      accessMode: ReadWriteOnce
+      size: 10Gi
+      mountPath: /app/app/data
+    logs:
+      enabled: true
+      storageClass: ""
+      accessMode: ReadWriteOnce
+      size: 5Gi
+      mountPath: /app/logs
+  
+  # Health checks
+  livenessProbe:
+    httpGet:
+      path: /api/health
+      port: 8000
+    initialDelaySeconds: 40
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /api/health
+      port: 8000
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  # Node selector, tolerations, and affinity
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  
+  # Pod annotations and labels
+  podAnnotations: {}
+  podLabels: {}
+
+# Frontend application configuration
+frontend:
+  image:
+    repository: vuln-kb-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  replicaCount: 1
+  
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+    annotations: {}
+  
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: vuln-kb.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  
+  # Resource limits and requests
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  # Security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+  
+  # Pod security context
+  podSecurityContext:
+    fsGroup: 1001
+    runAsUser: 1001
+    runAsGroup: 1001
+  
+  # Environment variables
+  env:
+    NODE_ENV: "production"
+    NEXT_TELEMETRY_DISABLED: "1"
+    PORT: "3000"
+  
+  # Backend service URL (will be set automatically based on backend service)
+  backendUrl: ""
+  
+  # Health checks
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  # Node selector, tolerations, and affinity
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  
+  # Pod annotations and labels
+  podAnnotations: {}
+  podLabels: {}
+
+# Global configurations
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""

@@ -1,0 +1,71 @@
+1. Get the application URLs by running these commands:
+
+{{- if .Values.frontend.ingress.enabled }}
+{{- range $host := .Values.frontend.ingress.hosts }}
+  {{- range .paths }}
+  Frontend: http{{ if $.Values.frontend.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.frontend.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "vuln-kb.fullname" . }}-frontend)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  Frontend: http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.frontend.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "vuln-kb.fullname" . }}-frontend'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "vuln-kb.fullname" . }}-frontend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  Frontend: http://$SERVICE_IP:{{ .Values.frontend.service.port }}
+{{- else if contains "ClusterIP" .Values.frontend.service.type }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "vuln-kb.fullname" . }}-frontend {{ .Values.frontend.service.port }}:{{ .Values.frontend.service.port }}
+  Frontend: http://127.0.0.1:{{ .Values.frontend.service.port }}
+{{- end }}
+
+{{- if .Values.backend.ingress.enabled }}
+{{- range $host := .Values.backend.ingress.hosts }}
+  {{- range .paths }}
+  Backend API: http{{ if $.Values.backend.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.backend.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "vuln-kb.fullname" . }}-backend)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  Backend API: http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.backend.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "vuln-kb.fullname" . }}-backend'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "vuln-kb.fullname" . }}-backend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  Backend API: http://$SERVICE_IP:{{ .Values.backend.service.port }}
+{{- else if contains "ClusterIP" .Values.backend.service.type }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "vuln-kb.fullname" . }}-backend {{ .Values.backend.service.port }}:{{ .Values.backend.service.port }}
+  Backend API: http://127.0.0.1:{{ .Values.backend.service.port }}
+{{- end }}
+
+2. Important Configuration Notes:
+
+   - Before deploying, ensure you configure the Azure OpenAI credentials in values.yaml:
+     * backend.secretEnv.AZURE_OPENAI_API_KEY
+     * backend.secretEnv.AZURE_OPENAI_ENDPOINT
+     * backend.secretEnv.AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT
+     * backend.secretEnv.AZURE_OPENAI_COMPLETIONS_DEPLOYMENT
+
+   - The backend requires persistent storage for data and logs. Ensure your cluster has:
+     * A default storage class configured, or
+     * Set backend.persistence.data.storageClass and backend.persistence.logs.storageClass
+
+   - For production use, consider:
+     * Enabling ingress for external access
+     * Configuring proper resource limits
+     * Setting up monitoring and logging
+     * Configuring backup for persistent volumes
+
+3. Health checks are enabled and configured to monitor:
+   - Backend: /api/health endpoint
+   - Frontend: root path (/)
+
+4. Security features included:
+   - Non-root containers for both services
+   - Security contexts configured
+   - Service account created with minimal privileges
+   - Secrets properly managed for sensitive environment variables
+
+For more information, check the values.yaml file for all configuration options.
