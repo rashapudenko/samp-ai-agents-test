@@ -1,0 +1,29 @@
+apiVersion: v2
+name: rag-backend
+description: Security Vulnerabilities RAG Backend API
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - rag
+  - security
+  - vulnerabilities
+  - fastapi
+  - python
+  - backend
+  - api
+
+maintainers:
+  - name: RAG Team
+    email: team@company.com
+
+sources:
+  - https://github.com/rashapudenko/samp-ai-agents-test
+
+home: https://github.com/rashapudenko/samp-ai-agents-test
+
+annotations:
+  category: Applications
+  azure.com/aks-optimized: "true"
+  azure.com/workload-identity-ready: "true"

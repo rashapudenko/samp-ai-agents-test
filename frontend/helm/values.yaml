@@ -1,0 +1,277 @@
+# ================================================================
+# RAG FRONTEND HELM CHART VALUES
+# ================================================================
+# Security Vulnerabilities RAG Frontend Application configuration
+
+# -- Namespace to deploy the application (leave empty for Release namespace)
+namespace: ""
+
+# -- Number of replicas for the deployment
+replicaCount: 2
+
+# ================================================================
+# IMAGE CONFIGURATION
+# ================================================================
+image:
+  # -- Container image repository
+  repository: "myregistry.azurecr.io/rag-frontend"
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Image tag (overrides the chart appVersion)
+  tag: "latest"
+
+# -- Secrets for pulling images from private registries
+imagePullSecrets: []
+
+# ================================================================
+# APPLICATION NAMING
+# ================================================================
+# -- String to partially override app.fullname template
+nameOverride: ""
+# -- String to fully override app.fullname template
+fullnameOverride: ""
+
+# ================================================================
+# SERVICE ACCOUNT
+# ================================================================
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Automatically mount a ServiceAccount's API credentials
+  automount: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use
+  name: ""
+
+# ================================================================
+# POD SECURITY
+# ================================================================
+# -- Pod annotations
+podAnnotations: {}
+
+# -- Pod labels
+podLabels: {}
+
+# -- Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true  # Next.js can run with readonly filesystem
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# ================================================================
+# SERVICE CONFIGURATION
+# ================================================================
+service:
+  # -- Service type
+  type: ClusterIP
+  # -- Service port
+  port: 80
+  # -- Container port (Next.js runs on 3000)
+  containerPort: 3000
+  # -- Service annotations
+  annotations: {}
+
+# ================================================================
+# INGRESS CONFIGURATION
+# ================================================================
+ingress:
+  # -- Enable ingress
+  enabled: true
+  # -- Ingress class name
+  className: "nginx"
+  # -- Ingress annotations
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+  # -- Ingress hosts configuration
+  hosts:
+    - host: rag-app.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # -- Ingress TLS configuration
+  tls: []
+
+# ================================================================
+# RESOURCE MANAGEMENT
+# ================================================================
+# -- Resource limits and requests
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# ================================================================
+# HEALTH CHECKS
+# ================================================================
+# -- Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 10
+  initialDelaySeconds: 30
+
+# -- Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 10
+
+# -- Startup probe configuration
+startupProbe:
+  httpGet:
+    path: /
+    port: http
+    scheme: HTTP
+  failureThreshold: 30
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 5
+
+# ================================================================
+# AUTOSCALING
+# ================================================================
+autoscaling:
+  # -- Enable horizontal pod autoscaler
+  enabled: true
+  # -- Minimum number of replicas
+  minReplicas: 2
+  # -- Maximum number of replicas
+  maxReplicas: 8
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 70
+  # -- Target memory utilization percentage  
+  targetMemoryUtilizationPercentage: 80
+
+# ================================================================
+# APPLICATION CONFIGURATION
+# ================================================================
+# -- Environment variables configuration
+env:
+  # -- Enable environment variables from ConfigMap
+  enabled: true
+  # -- Environment variables
+  variables:
+    NODE_ENV: "production"
+    NEXT_TELEMETRY_DISABLED: "1"
+    PORT: "3000"
+
+# -- Extra environment variables from secrets or configmaps
+extraEnvFrom: []
+
+# -- Extra environment variables for backend API URL
+extraEnv:
+  - name: NEXT_PUBLIC_API_URL
+    value: "http://rag-backend:80"
+  - name: NEXT_PUBLIC_APP_NAME
+    value: "Security Vulnerabilities RAG"
+
+# ================================================================
+# DEPLOYMENT STRATEGY
+# ================================================================
+# -- Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+
+# -- Termination grace period in seconds
+terminationGracePeriodSeconds: 30
+
+# ================================================================
+# AKS-SPECIFIC OPTIMIZATIONS
+# ================================================================
+aks:
+  # -- AKS-specific node selector for Linux nodes
+  nodeSelector:
+    kubernetes.io/os: linux
+  # -- AKS system tolerations
+  tolerations: []
+  # -- AKS workload identity configuration
+  workloadIdentity:
+    # -- Enable AKS Workload Identity
+    enabled: false
+    # -- Service account annotations for workload identity
+    annotations: {}
+    podLabels:
+      azure.workload.identity/use: 'true'
+
+# -- Additional node selector
+nodeSelector: {}
+
+# -- Tolerations for pod scheduling
+tolerations: []
+
+# -- Affinity for pod scheduling
+affinity:
+  # Prefer to run on different nodes for HA
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - rag-frontend
+        topologyKey: kubernetes.io/hostname
+
+# -- Priority class for pod scheduling
+priorityClassName: ""
+
+# -- DNS configuration optimized for AKS
+dnsPolicy: ClusterFirst
+dnsConfig:
+  options:
+    - name: ndots
+      value: "2"
+    - name: edns0
+
+# ================================================================
+# ADDITIONAL VOLUMES
+# ================================================================
+# -- Additional volumes for tmp and cache directories
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: nextjs-cache
+    emptyDir: {}
+
+# -- Additional volume mounts
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: nextjs-cache
+    mountPath: /app/.next/cache

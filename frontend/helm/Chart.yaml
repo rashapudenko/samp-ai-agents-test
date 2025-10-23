@@ -1,0 +1,29 @@
+apiVersion: v2
+name: rag-frontend
+description: Security Vulnerabilities RAG Frontend Application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - rag
+  - security
+  - vulnerabilities
+  - nextjs
+  - react
+  - frontend
+  - ui
+
+maintainers:
+  - name: RAG Team
+    email: team@company.com
+
+sources:
+  - https://github.com/rashapudenko/samp-ai-agents-test
+
+home: https://github.com/rashapudenko/samp-ai-agents-test
+
+annotations:
+  category: Applications
+  azure.com/aks-optimized: "true"
+  azure.com/workload-identity-ready: "true"
