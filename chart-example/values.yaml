@@ -1,0 +1,527 @@
+# ================================================================
+# PRODUCTION-READY APPLICATION HELM CHART TEMPLATE
+# ================================================================
+# 
+# This is a comprehensive template for deploying applications on AKS
+# with enterprise-grade features, security, and observability.
+#
+# Configuration Strategy:
+# - values.yaml: Base configuration with secure defaults
+# - values.[ENV].yaml: Environment specific overrides
+#
+# Usage:
+#   helm install myapp . -f values.yaml -f values.[ENV].yaml
+# ================================================================
+
+# -- Namespace to deploy the application (leave empty for Release namespace)
+namespace: ""
+
+# -- Number of replicas for the deployment
+replicaCount: 1
+
+# ================================================================
+# IMAGE CONFIGURATION
+# ================================================================
+image:
+  # -- Container image repository
+  # Example: myregistry.azurecr.io/my-application
+  repository: "myregistry.azurecr.io/my-application"
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion
+  tag: "latest"
+
+# -- Secrets for pulling images from private registries
+imagePullSecrets: []
+# Example for DockerHub:
+# imagePullSecrets:
+#   - name: acr-secret
+
+# ================================================================
+# APPLICATION NAMING
+# ================================================================
+# -- String to partially override app.fullname template (will maintain the release name)
+nameOverride: ""
+
+# -- String to fully override app.fullname template
+fullnameOverride: ""
+
+# ================================================================
+# SERVICE ACCOUNT & AZURE WORKLOAD IDENTITY
+# ================================================================
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# ================================================================
+# POD SECURITY STANDARDS
+# ================================================================
+# -- Pod Security Standards configuration
+podSecurityStandards:
+  # -- Enable Pod Security Standards enforcement
+  enabled: true
+  # -- Enforce baseline Pod Security Standards
+  enforceBaseline: true
+  # -- Enforce restricted Pod Security Standards
+  enforceRestricted: true
+  # -- User ID for restricted mode
+  runAsUser: 1001
+  # -- Group ID for restricted mode
+  runAsGroup: 1001
+  # -- Filesystem group for restricted mode
+  fsGroup: 1001
+
+# ================================================================
+# POD CONFIGURATION
+# ================================================================
+# -- Annotations to add to the pod
+podAnnotations: {}
+  # prometheus.io/scrape: "true"
+  # prometheus.io/port: "8080"
+  # prometheus.io/path: "/metrics"
+
+# -- Labels to add to the pod
+podLabels: {}
+
+# -- Pod security context (enforces security best practices)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context (enforces security best practices)
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# ================================================================
+# SERVICE CONFIGURATION
+# ================================================================
+service:
+  # -- Service type
+  type: ClusterIP
+  # -- Service port
+  port: 80
+  # -- Container port (port your application listens on)
+  containerPort: 8080
+  # -- Service annotations
+  annotations: {}
+
+# ================================================================
+# INGRESS CONFIGURATION
+# ================================================================
+ingress:
+  # -- Enable ingress
+  enabled: false
+  # -- Ingress class name (nginx, traefik, etc.)
+  className: "nginx"
+  # -- Ingress annotations
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  # -- Ingress hosts configuration
+  hosts:
+    - host: myapp.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # -- Ingress TLS configuration
+  tls: []
+  #  - secretName: myapp-tls
+  #    hosts:
+  #      - myapp.example.com
+
+# ================================================================
+# NETWORK SECURITY
+# ================================================================
+networkPolicy:
+  # -- Enable network policy
+  enabled: false
+  # -- Additional ingress rules
+  ingress: []
+  # -- Additional egress rules  
+  egress: []
+
+# ================================================================
+# AZURE KEY VAULT SECRETS (Secret Provider Class)
+# ================================================================
+azureKeyVault:
+  # -- Enable Azure Key Vault integration
+  enabled: false
+  # -- Use VM managed identity (if false, uses workload identity)
+  useVMManagedIdentity: false
+  # -- Azure Key Vault name
+  vaultName: ""
+  # -- Azure client ID (for workload identity)
+  clientId: ""
+  # -- Azure tenant ID
+  tenantId: ""  
+  # -- Key-value mapping: AKV secret name -> K8s secret key name
+  secrets: {}
+  # Example:
+  # secrets:
+  #   database-password: DB_PASSWORD
+  #   api-key: API_KEY
+  #   connection-string: CONNECTION_STRING
+
+# ================================================================
+# RESOURCE GOVERNANCE
+# ================================================================
+# -- Resource quota configuration
+resourceQuota:
+  # -- Enable resource quota
+  enabled: false
+  # -- Resource requests quotas
+  requests:
+    cpu: "4"
+    memory: "8Gi"
+  # -- Resource limits quotas
+  limits:
+    cpu: "8"
+    memory: "16Gi"
+  # -- Additional resource quotas
+  persistentvolumeclaims: "4"
+  pods: "10"
+  services: "5"
+  secrets: "10"
+  configmaps: "10"
+
+# -- Limit range configuration
+limitRange:
+  # -- Enable limit range
+  enabled: false
+  # -- Container limits
+  container:
+    default:
+      cpu: "500m"
+      memory: "512Mi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "128Mi"
+    max:
+      cpu: "2"
+      memory: "4Gi"
+    min:
+      cpu: "10m"
+      memory: "64Mi"
+  # -- Pod limits
+  pod:
+    max:
+      cpu: "4"
+      memory: "8Gi"
+    min:
+      cpu: "10m"
+      memory: "64Mi"
+
+# ================================================================
+# RESOURCE MANAGEMENT
+# ================================================================
+# -- Resource limits and requests (AKS-optimized defaults)
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+    # ephemeral-storage: 1Gi  # Uncomment for ephemeral storage limits
+  requests:
+    cpu: 100m
+    memory: 128Mi
+    # ephemeral-storage: 100Mi  # Uncomment for ephemeral storage requests
+
+# ================================================================
+# HEALTH CHECKS
+# ================================================================
+# -- Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 30
+
+# -- Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 5
+
+# -- Startup probe configuration
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  failureThreshold: 30
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 10
+
+# ================================================================
+# AUTOSCALING
+# ================================================================
+autoscaling:
+  # -- Enable horizontal pod autoscaler
+  enabled: false
+  # -- Minimum number of replicas
+  minReplicas: 1
+  # -- Maximum number of replicas
+  maxReplicas: 10
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 70
+  # -- Target memory utilization percentage  
+  targetMemoryUtilizationPercentage: 80
+  # -- Custom metrics for autoscaling
+  metrics: []
+  # -- Behavior configuration for autoscaling (will use AKS-optimized defaults if not specified)
+  behavior: {}
+
+# ================================================================
+# HIGH AVAILABILITY
+# ================================================================
+# -- Pod Disruption Budget configuration
+podDisruptionBudget:
+  # -- Enable pod disruption budget
+  enabled: false
+  # -- Minimum available pods
+  minAvailable: 1
+  # -- Maximum unavailable pods (alternative to minAvailable)
+  # maxUnavailable: 1
+
+# ================================================================
+# APPLICATION CONFIGURATION
+# ================================================================
+# -- Environment variables configuration
+env:
+  # -- Enable environment variables from ConfigMap
+  enabled: false
+  # -- Environment variables
+  variables: {}
+    # APP_ENV: "production"
+    # LOG_LEVEL: "info"
+
+# -- Extra environment variables from secrets or configmaps
+extraEnvFrom: []
+# - secretRef:
+#     name: extra-secret
+# - configMapRef:
+#     name: extra-configmap
+
+# -- Extra environment variables
+extraEnv: []
+# - name: EXTRA_VAR
+#   value: "extra-value"
+
+# ================================================================
+# ADVANCED CONFIGURATION
+# ================================================================
+# -- Init containers
+initContainers: []
+# - name: init-db
+#   image: busybox:1.35
+#   command: ['sh', '-c', 'until nc -z db 5432; do sleep 1; done']
+
+# -- Sidecar containers
+sidecars: []
+# - name: sidecar-container
+#   image: busybox:1.35
+#   command: ['sleep', '3600']
+
+# ================================================================
+# MONITORING & OBSERVABILITY
+# ================================================================
+monitoring:
+  # -- Enable monitoring
+  enabled: false
+  # -- ServiceMonitor configuration for Prometheus
+  serviceMonitor:
+    # -- ServiceMonitor labels
+    labels: {}
+    # -- ServiceMonitor annotations
+    annotations: {}
+    # -- Scrape interval
+    interval: 30s
+    # -- Scrape timeout
+    timeout: 10s
+    # -- Metrics path
+    path: /metrics
+    # -- Metrics port
+    port: http
+
+# ================================================================
+# COMPLIANCE & GOVERNANCE
+# ================================================================
+# -- Compliance configuration
+compliance:
+  # -- Enable compliance features
+  enabled: false
+  # -- Compliance framework (NIST, SOC2, PCI-DSS, HIPAA, GDPR)
+  framework: "NIST"
+  # -- Compliance level (baseline, moderate, high)
+  level: "moderate"
+  # -- Enable audit logging
+  auditLogging: false
+  # -- Audit log level (info, warning, error)
+  auditLogLevel: "info"
+  # -- Azure Log Analytics configuration
+  azureLogAnalytics:
+    # -- Azure Log Analytics Workspace ID
+    workspaceId: ""
+    # -- Azure Log Analytics Shared Key
+    sharedKey: ""
+    # -- Custom log type name
+    logType: "KubernetesAuditLog"
+  # -- Compliance requirements
+  requirements:
+    - id: "AC-2"
+      name: "Account Management"
+      description: "Manage information system accounts"
+      status: "implemented"
+      evidence: "RBAC and service accounts configured"
+    - id: "AC-3"
+      name: "Access Enforcement"
+      description: "Enforce approved authorizations"
+      status: "implemented"
+      evidence: "Network policies and RBAC enforced"
+    - id: "SC-8"
+      name: "Transmission Confidentiality"
+      description: "Protect communications"
+      status: "implemented"
+      evidence: "TLS encryption for all communications"
+  # -- Encryption at rest
+  encryptionAtRest: false
+
+# -- RBAC configuration
+rbac:
+  # -- Enable RBAC
+  enabled: true
+  # -- Enforce least privilege principle
+  leastPrivilege: true
+  # -- Additional roles
+  roles: []
+  # -- Additional role bindings
+  roleBindings: []
+
+# ================================================================
+# DEPLOYMENT STRATEGY
+# ================================================================
+# -- Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+
+# -- Pod lifecycle hooks
+lifecycle: {}
+  # preStop:
+  #   exec:
+  #     command: ["/bin/sh", "-c", "sleep 15"]
+
+# -- Termination grace period in seconds
+terminationGracePeriodSeconds: 30
+
+# ================================================================
+# AKS-SPECIFIC OPTIMIZATIONS
+# ================================================================
+aks:
+  # -- Enable AKS-specific node selector for Linux nodes
+  nodeSelector:
+    kubernetes.io/os: linux
+    # kubernetes.io/arch: amd64  # Uncomment for specific architecture
+  # -- AKS system tolerations for improved scheduling
+  tolerations: []
+  # -- AKS workload identity configuration
+  workloadIdentity:
+    # -- Enable AKS Workload Identity
+    enabled: false
+    # -- Service account annotations for workload identity
+    annotations: {}
+      # azure.workload.identity/client-id: "00000000-0000-0000-0000-000000000000"
+    podLabels:
+      azure.workload.identity/use: 'true'
+  # -- AKS-optimized topology spread constraints
+  topologySpreadConstraints:
+    # -- Enable zone-aware pod distribution for HA
+    enabled: false
+    # -- Topology spread constraint configurations
+    constraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: [MY-APPLICATION]
+
+# ================================================================
+# KUBERNETES SCHEDULING
+# ================================================================
+# -- Additional node selector (merged with AKS node selector)
+nodeSelector: {}
+
+# -- Tolerations for pod scheduling
+tolerations: []
+
+# -- Affinity for pod scheduling
+affinity: {}
+
+# -- Topology spread constraints (additional to AKS optimizations)
+topologySpreadConstraints: []
+
+# -- Priority class for pod scheduling
+priorityClassName: ""
+
+# -- DNS configuration optimized for AKS
+dnsPolicy: ClusterFirst
+dnsConfig:
+  options:
+    # Optimize DNS resolution for AKS
+    - name: ndots
+      value: "2"
+    - name: edns0
+
+# ================================================================
+# STORAGE
+# ================================================================
+# -- Additional volumes
+volumes: []
+# - name: config-volume
+#   configMap:
+#     name: myapp-config
+# - name: secret-volume
+#   secret:
+#     secretName: myapp-secret
+
+# -- Additional volume mounts
+volumeMounts: []
+# - name: config-volume
+#   mountPath: /etc/config
+#   readOnly: true
+# - name: secret-volume
+#   mountPath: /etc/secrets
+#   readOnly: true

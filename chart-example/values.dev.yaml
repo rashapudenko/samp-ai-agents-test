@@ -1,0 +1,114 @@
+# ================================================================
+# DEVELOPMENT ENVIRONMENT CONFIGURATION
+# ================================================================
+# This file contains development-specific overrides for the base values.yaml
+# Usage: helm install myapp . -f values.yaml -f values.dev.yaml
+
+# -- Development namespace
+namespace: development
+
+# -- Single replica for development
+replicaCount: 1
+
+# -- Development image configuration
+image:
+  # -- Always pull latest for development
+  pullPolicy: Always
+  # -- Use development tag or leave empty for latest
+  tag: "dev"
+
+# -- Development ingress configuration
+ingress:
+  # -- Enable ingress for development
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: myapp.dev.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: myapp-dev-tls
+      hosts:
+        - myapp.dev.example.com
+
+# -- Development resource limits (lower for cost optimization)
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+# -- Development environment variables
+env:
+  enabled: true
+  variables:
+    LOG_LEVEL: "debug"
+    DEBUG: "true"
+    NODE_ENV: "development"
+    ASPNETCORE_ENVIRONMENT: "Development"
+
+# -- Relaxed health checks for development
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 10
+
+readinessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 5
+
+# -- Disabled autoscaling for development
+autoscaling:
+  enabled: false
+
+# -- Disabled PDB for development
+podDisruptionBudget:
+  enabled: false
+
+# -- Development network policy (more permissive)
+networkPolicy:
+  enabled: true
+  ingress:
+    - from: []  # Allow all ingress in development
+  egress:
+    - to: []    # Allow all egress in development
+
+# -- Development monitoring (basic)
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: false  # Disable Prometheus scraping in dev
+
+# -- Development security (relaxed for debugging)
+podSecurityStandards:
+  enabled: true
+  enforceBaseline: true
+  enforceRestricted: false  # Relaxed for development
+
+# -- Development compliance (disabled)
+compliance:
+  enabled: false
+
+# -- Development resource governance (disabled)
+resourceQuota:
+  enabled: false
+
+limitRange:
+  enabled: false
+
+# -- Development Azure integration
+azureKeyVault:
+  enabled: false  # Use local secrets in development
+
+aks:
+  workloadIdentity:
+    enabled: false  # Use local identity in development
+  topologySpreadConstraints:
+    enabled: false  # No HA requirements in development

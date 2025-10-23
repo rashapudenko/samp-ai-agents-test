@@ -1,0 +1,97 @@
+# ================================================================
+# SPECIFIC ENVIRONMENT CONFIGURATION
+# ================================================================
+# This file contains environment-specific overrides
+# Usage: helm install myapp . -f values.yaml -f environments/values.[ENV].yaml
+# ================================================================
+
+namespace: "[NAMESPACE]"
+
+replicaCount: 1
+
+image:
+  tag: "[TAG]"
+  repository: "[REGISTRY]/[REPOSITORY]"
+  pullPolicy: Always
+
+# Enable ingress for development testing
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+  hosts:
+    - host: myapp-dev.example.com
+      paths:
+        - backend:
+            service:
+              name: my-app-service
+              port:
+                number: 80
+          path: /
+          pathType: Prefix
+  tls:
+    - secretName: tls-my-app-dev
+      hosts:
+        - myapp-dev.example.com
+
+# Relaxed resource limits for development
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Faster health checks for development
+livenessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  httpGet:
+    path: /health
+
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  httpGet:
+    path: /health
+
+startupProbe:
+  initialDelaySeconds: 5
+  failureThreshold: 10
+  httpGet:
+    path: /health
+
+# Development environment variables
+env:
+  enabled: true
+  variables:
+    ASPNETCORE_ENVIRONMENT: Production
+# Disable autoscaling in development
+autoscaling:
+  enabled: false
+
+# Development-specific Azure Key Vault (if needed)
+azureKeyVault:
+  enabled: false
+  # Uncomment and configure for development secrets
+  # vaultName: "myapp-dev-kv"
+  # secrets:
+  #   database-password: DB_PASSWORD
+
+# AKS optimizations for development
+aks:
+  workloadIdentity:
+    enabled: false
+  topologySpreadConstraints:
+    enabled: false
+
+# Development doesn't need PDB
+podDisruptionBudget:
+  enabled: false
+
+service:
+  type: ClusterIP
+  port: 80
+  containerPort: 5000

@@ -1,0 +1,43 @@
+apiVersion: v2
+name: generic-app-template
+description: A production-ready application Helm chart template for AKS
+
+# A chart can be either an 'application' or a 'library' chart.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 1.0.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "1.0.0"
+
+# Keywords for this chart (used for search and discovery)
+keywords:
+  - application
+  - microservice
+  - aks
+  - azure
+  - kubernetes
+
+# Chart maintainers (Replace with your team information)
+maintainers:
+  - name: Your Team Name
+    email: your-team@company.com
+
+# Source code repository (Replace with your repository)
+sources:
+  - https://github.com/your-org/your-application
+
+# Home page for this project (Replace with your project home)
+home: https://github.com/your-org/your-application
+
+# Annotations for additional metadata
+annotations:
+  category: Applications
+  azure.com/aks-optimized: "true"
+  azure.com/workload-identity-ready: "true"
