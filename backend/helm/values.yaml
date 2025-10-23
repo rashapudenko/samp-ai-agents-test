@@ -1,0 +1,295 @@
+# ================================================================
+# RAG BACKEND HELM CHART VALUES
+# ================================================================
+# Security Vulnerabilities RAG Backend API configuration
+
+# -- Namespace to deploy the application (leave empty for Release namespace)
+namespace: ""
+
+# -- Number of replicas for the deployment
+replicaCount: 1
+
+# ================================================================
+# IMAGE CONFIGURATION
+# ================================================================
+image:
+  # -- Container image repository
+  repository: "myregistry.azurecr.io/rag-backend"
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Image tag (overrides the chart appVersion)
+  tag: "latest"
+
+# -- Secrets for pulling images from private registries
+imagePullSecrets: []
+
+# ================================================================
+# APPLICATION NAMING
+# ================================================================
+# -- String to partially override app.fullname template
+nameOverride: ""
+# -- String to fully override app.fullname template
+fullnameOverride: ""
+
+# ================================================================
+# SERVICE ACCOUNT
+# ================================================================
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Automatically mount a ServiceAccount's API credentials
+  automount: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use
+  name: ""
+
+# ================================================================
+# POD SECURITY
+# ================================================================
+# -- Pod annotations
+podAnnotations: {}
+
+# -- Pod labels
+podLabels: {}
+
+# -- Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false  # Set to false for data persistence
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# ================================================================
+# SERVICE CONFIGURATION
+# ================================================================
+service:
+  # -- Service type
+  type: ClusterIP
+  # -- Service port
+  port: 80
+  # -- Container port (FastAPI runs on 8000)
+  containerPort: 8000
+  # -- Service annotations
+  annotations: {}
+
+# ================================================================
+# INGRESS CONFIGURATION
+# ================================================================
+ingress:
+  # -- Enable ingress
+  enabled: false
+  # -- Ingress class name
+  className: "nginx"
+  # -- Ingress annotations
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type, Authorization"
+  # -- Ingress hosts configuration
+  hosts:
+    - host: rag-api.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # -- Ingress TLS configuration
+  tls: []
+
+# ================================================================
+# RESOURCE MANAGEMENT
+# ================================================================
+# -- Resource limits and requests
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+# ================================================================
+# HEALTH CHECKS
+# ================================================================
+# -- Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 10
+  initialDelaySeconds: 45
+
+# -- Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 15
+
+# -- Startup probe configuration
+startupProbe:
+  httpGet:
+    path: /api/health
+    port: http
+    scheme: HTTP
+  failureThreshold: 30
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 10
+
+# ================================================================
+# AUTOSCALING
+# ================================================================
+autoscaling:
+  # -- Enable horizontal pod autoscaler
+  enabled: false
+  # -- Minimum number of replicas
+  minReplicas: 1
+  # -- Maximum number of replicas
+  maxReplicas: 5
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 70
+  # -- Target memory utilization percentage  
+  targetMemoryUtilizationPercentage: 80
+
+# ================================================================
+# APPLICATION CONFIGURATION
+# ================================================================
+# -- Environment variables configuration
+env:
+  # -- Enable environment variables from ConfigMap
+  enabled: true
+  # -- Environment variables
+  variables:
+    PYTHONUNBUFFERED: "1"
+    PYTHONDONTWRITEBYTECODE: "1"
+    UVICORN_HOST: "0.0.0.0"
+    UVICORN_PORT: "8000"
+    LOG_LEVEL: "info"
+
+# -- Extra environment variables from secrets or configmaps
+extraEnvFrom: []
+
+# -- Extra environment variables for Azure OpenAI, database connections etc
+extraEnv:
+  - name: AZURE_OPENAI_ENDPOINT
+    valueFrom:
+      secretRef:
+        name: rag-secrets
+        key: azure-openai-endpoint
+  - name: AZURE_OPENAI_API_KEY
+    valueFrom:
+      secretRef:
+        name: rag-secrets
+        key: azure-openai-api-key
+  - name: DATABASE_URL
+    valueFrom:
+      secretRef:
+        name: rag-secrets
+        key: database-url
+
+# ================================================================
+# PERSISTENCE
+# ================================================================
+persistence:
+  # -- Enable persistent volume for vector database
+  enabled: true
+  # -- Storage class for persistent volume
+  storageClass: ""
+  # -- Access mode for persistent volume
+  accessMode: ReadWriteOnce
+  # -- Size of persistent volume
+  size: 5Gi
+  # -- Annotations for persistent volume claim
+  annotations: {}
+
+# ================================================================
+# DEPLOYMENT STRATEGY
+# ================================================================
+# -- Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+
+# -- Termination grace period in seconds
+terminationGracePeriodSeconds: 30
+
+# ================================================================
+# AKS-SPECIFIC OPTIMIZATIONS
+# ================================================================
+aks:
+  # -- AKS-specific node selector for Linux nodes
+  nodeSelector:
+    kubernetes.io/os: linux
+  # -- AKS system tolerations
+  tolerations: []
+  # -- AKS workload identity configuration
+  workloadIdentity:
+    # -- Enable AKS Workload Identity
+    enabled: false
+    # -- Service account annotations for workload identity
+    annotations: {}
+    podLabels:
+      azure.workload.identity/use: 'true'
+
+# -- Additional node selector
+nodeSelector: {}
+
+# -- Tolerations for pod scheduling
+tolerations: []
+
+# -- Affinity for pod scheduling
+affinity: {}
+
+# -- Priority class for pod scheduling
+priorityClassName: ""
+
+# -- DNS configuration optimized for AKS
+dnsPolicy: ClusterFirst
+dnsConfig:
+  options:
+    - name: ndots
+      value: "2"
+    - name: edns0
+
+# ================================================================
+# ADDITIONAL VOLUMES
+# ================================================================
+# -- Additional volumes
+volumes:
+  - name: data-volume
+    persistentVolumeClaim:
+      claimName: "{{ include \"app.fullname\" . }}-data"
+  - name: tmp
+    emptyDir: {}
+
+# -- Additional volume mounts
+volumeMounts:
+  - name: data-volume
+    mountPath: /app/data
+  - name: tmp
+    mountPath: /tmp

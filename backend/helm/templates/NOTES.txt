@@ -1,0 +1,88 @@
+1. Get the RAG Backend API URL by running these commands:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ include "app.namespace" . }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "app.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ include "app.namespace" . }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ include "app.namespace" . }} svc -w {{ include "app.fullname" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ include "app.namespace" . }} {{ include "app.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.service.port }}
+{{- else if contains "ClusterIP" .Values.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ include "app.namespace" . }} -l "app.kubernetes.io/name={{ include "app.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ include "app.namespace" . }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8000 to use your RAG Backend API"
+  kubectl --namespace {{ include "app.namespace" . }} port-forward $POD_NAME 8000:$CONTAINER_PORT
+{{- end }}
+
+2. Check the RAG Backend API health:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+   curl http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}api/health
+  {{- end }}
+{{- end }}
+{{- else }}
+   # After port-forwarding:
+   curl http://localhost:8000/api/health
+{{- end }}
+
+3. Check the application status:
+   kubectl get pods -l "app.kubernetes.io/name={{ include "app.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -n {{ include "app.namespace" . }}
+
+4. View application logs:
+   kubectl logs -l "app.kubernetes.io/name={{ include "app.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -n {{ include "app.namespace" . }} -f
+
+{{- if .Values.autoscaling.enabled }}
+5. Check autoscaling status:
+   kubectl get hpa {{ include "app.fullname" . }} -n {{ include "app.namespace" . }}
+{{- end }}
+
+{{- if .Values.persistence.enabled }}
+6. Check persistent volume status:
+   kubectl get pvc {{ include "app.fullname" . }}-data -n {{ include "app.namespace" . }}
+{{- end }}
+
+7. Test the RAG API endpoints:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+   # Query vulnerabilities
+   curl -X POST http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}api/query \
+     -H "Content-Type: application/json" \
+     -d '{"query": "What are the security vulnerabilities in numpy?"}'
+     
+   # Get vulnerabilities list
+   curl http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}api/vulnerabilities
+  {{- end }}
+{{- end }}
+{{- else }}
+   # After port-forwarding:
+   # Query vulnerabilities
+   curl -X POST http://localhost:8000/api/query \
+     -H "Content-Type: application/json" \
+     -d '{"query": "What are the security vulnerabilities in numpy?"}'
+     
+   # Get vulnerabilities list
+   curl http://localhost:8000/api/vulnerabilities
+{{- end }}
+
+== Security Notes ==
+- The application runs as non-root user (UID 1001)
+- Read-only root filesystem is disabled to allow data persistence
+- All capabilities are dropped for enhanced security
+- Resource limits are configured to prevent resource exhaustion
+
+== Configuration ==
+- FastAPI application running on port {{ .Values.service.containerPort }}
+- Health checks configured for /api/health endpoint
+- Environment variables loaded from ConfigMap and Secrets
+{{- if .Values.persistence.enabled }}
+- Persistent storage mounted at /app/data ({{ .Values.persistence.size }})
+{{- end }}
