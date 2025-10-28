@@ -1,0 +1,46 @@
+apiVersion: v2
+name: vulnerability-rag-backend
+description: FastAPI backend for Security Vulnerabilities RAG system
+
+# A chart can be either an 'application' or a 'library' chart.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 1.0.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "1.0.0"
+
+# Keywords for this chart (used for search and discovery)
+keywords:
+  - backend
+  - fastapi
+  - rag
+  - security
+  - vulnerabilities
+  - aks
+  - azure
+  - kubernetes
+
+# Chart maintainers
+maintainers:
+  - name: Security Team
+    email: security-team@company.com
+
+# Source code repository
+sources:
+  - https://github.com/your-org/vulnerability-rag-backend
+
+# Home page for this project
+home: https://github.com/your-org/vulnerability-rag-backend
+
+# Annotations for additional metadata
+annotations:
+  category: Applications
+  azure.com/aks-optimized: "true"
+  azure.com/workload-identity-ready: "true"

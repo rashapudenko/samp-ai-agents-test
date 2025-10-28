@@ -1,0 +1,129 @@
+# ================================================================
+# FRONTEND PRODUCTION ENVIRONMENT CONFIGURATION
+# ================================================================
+# This file contains production-specific overrides for the base values.yaml
+# Usage: helm install frontend . -f values.yaml -f values.prod.yaml
+
+# -- Production namespace
+namespace: frontend-prod
+
+# -- Production replica count
+replicaCount: 4
+
+# -- Production image configuration
+image:
+  # -- Production registry and image
+  repository: "myprodacr.azurecr.io/frontend-prod"
+  # -- Use specific tags for production
+  pullPolicy: IfNotPresent
+  # -- Use production tag
+  tag: "prod"
+
+# -- Production ingress configuration
+ingress:
+  # -- Enable ingress for production
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/client-max-body-size: "10m"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+  hosts:
+    - host: vulnerability-rag.company.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: vulnerability-rag-frontend-prod-tls
+      hosts:
+        - vulnerability-rag.company.com
+
+# -- Production resource limits
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# -- Production environment variables
+env:
+  enabled: true
+  variables:
+    NODE_ENV: "production"
+    PORT: "3000"
+    NEXT_PUBLIC_API_URL: "http://vulnerability-rag-backend.backend-prod.svc.cluster.local"
+
+# -- Production autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 4
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# -- Production PDB configuration
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# -- Production network policy (strict)
+networkPolicy:
+  enabled: true
+  ingress:
+    - from: []  # Allow ingress from load balancer
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vulnerability-rag-backend
+      ports:
+        - protocol: TCP
+          port: 8000
+    - to: []  # Allow external egress for CDN, etc.
+
+# -- Production security standards (strict)
+podSecurityStandards:
+  enabled: true
+  enforceBaseline: true
+  enforceRestricted: true
+
+# -- Production compliance (enabled)
+compliance:
+  enabled: true
+  framework: "NIST"
+  level: "high"
+  auditLogging: true
+
+# -- Production Azure integration
+azureKeyVault:
+  enabled: true
+  useVMManagedIdentity: false
+  # Note: These should be configured with actual values in production
+  vaultName: "prod-key-vault"
+  clientId: ""
+  tenantId: ""
+  secrets: {}
+
+aks:
+  workloadIdentity:
+    enabled: true
+    annotations:
+      azure.workload.identity/client-id: "production-frontend-client-id"
+  topologySpreadConstraints:
+    enabled: true
+
+# -- Production monitoring
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 15s

@@ -1,0 +1,106 @@
+# ================================================================
+# BACKEND PRODUCTION ENVIRONMENT CONFIGURATION
+# ================================================================
+# This file contains production-specific overrides for the base values.yaml
+# Usage: helm install backend . -f values.yaml -f values.prod.yaml
+
+# -- Production namespace
+namespace: backend-prod
+
+# -- Production replica count
+replicaCount: 3
+
+# -- Production image configuration
+image:
+  # -- Production registry and image
+  repository: "myprodacr.azurecr.io/backend-prod"
+  # -- Use specific tags for production
+  pullPolicy: IfNotPresent
+  # -- Use production tag
+  tag: "prod"
+
+# -- Production resource limits
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+# -- Production environment variables
+env:
+  enabled: true
+  variables:
+    LOG_LEVEL: "warn"
+    DEBUG: "false"
+    APP_ENV: "production"
+    PORT: "8000"
+    PYTHONPATH: "/app"
+
+# -- Production autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 12
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# -- Production PDB configuration
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# -- Production network policy (strict)
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vulnerability-rag-frontend
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to: []
+
+# -- Production security standards (strict)
+podSecurityStandards:
+  enabled: true
+  enforceBaseline: true
+  enforceRestricted: true
+
+# -- Production compliance (enabled)
+compliance:
+  enabled: true
+  framework: "NIST"
+  level: "high"
+  auditLogging: true
+
+# -- Production Azure integration
+azureKeyVault:
+  enabled: true
+  useVMManagedIdentity: false
+  # Note: These should be configured with actual values in production
+  vaultName: "prod-key-vault"
+  clientId: ""
+  tenantId: ""
+  secrets:
+    azure-openai-key: AZURE_OPENAI_API_KEY
+    database-url: DATABASE_URL
+
+aks:
+  workloadIdentity:
+    enabled: true
+    annotations:
+      azure.workload.identity/client-id: "production-client-id"
+  topologySpreadConstraints:
+    enabled: true
+
+# -- Production monitoring
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 15s

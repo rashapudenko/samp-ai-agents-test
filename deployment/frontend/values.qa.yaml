@@ -1,0 +1,110 @@
+# ================================================================
+# FRONTEND QA ENVIRONMENT CONFIGURATION
+# ================================================================
+# This file contains QA-specific overrides for the base values.yaml
+# Usage: helm install frontend . -f values.yaml -f values.qa.yaml
+
+# -- QA namespace
+namespace: frontend-qa
+
+# -- QA replica count
+replicaCount: 2
+
+# -- QA image configuration
+image:
+  # -- QA registry and image
+  repository: "myqaacr.azurecr.io/frontend-qa"
+  # -- Use specific tags for QA
+  pullPolicy: IfNotPresent
+  # -- Use QA tag
+  tag: "qa"
+
+# -- QA ingress configuration
+ingress:
+  # -- Enable ingress for QA
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  hosts:
+    - host: vulnerability-rag.qa.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: vulnerability-rag-frontend-qa-tls
+      hosts:
+        - vulnerability-rag.qa.example.com
+
+# -- QA resource limits
+resources:
+  limits:
+    cpu: 400m
+    memory: 768Mi
+  requests:
+    cpu: 75m
+    memory: 192Mi
+
+# -- QA environment variables
+env:
+  enabled: true
+  variables:
+    NODE_ENV: "production"
+    PORT: "3000"
+    NEXT_PUBLIC_API_URL: "http://vulnerability-rag-backend.backend-qa.svc.cluster.local"
+
+# -- QA autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 8
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# -- QA PDB configuration
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# -- QA network policy
+networkPolicy:
+  enabled: true
+  ingress:
+    - from: []  # Allow ingress from load balancer
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vulnerability-rag-backend
+      ports:
+        - protocol: TCP
+          port: 8000
+    - to: []  # Allow external egress
+
+# -- QA security standards
+podSecurityStandards:
+  enabled: true
+  enforceBaseline: true
+  enforceRestricted: true
+
+# -- QA compliance
+compliance:
+  enabled: true
+  framework: "NIST"
+  level: "moderate"
+
+# -- QA Azure integration
+azureKeyVault:
+  enabled: false  # Can be enabled with proper configuration
+
+aks:
+  workloadIdentity:
+    enabled: false
+  topologySpreadConstraints:
+    enabled: true
