@@ -1,0 +1,17 @@
+dev: 
+  - mydevacr.azurecr.io image registry
+  - image names are app names that suffixed with -dev
+  - working image tag is dev
+  - k8s namespace names are app names that suffixed with -dev
+
+qa: 
+  - myqaacr.azurecr.io image registry
+  - image names are app names that suffixed with -qa
+  - working image tag is qa
+  - k8s namespace names are app names that suffixed with -qa
+
+prod: 
+  - myprodacr.azurecr.io image registry
+  - image names are app names that suffixed with -prod
+  - working image tag is prod
+  - k8s namespace names are app names that suffixed with -prod
