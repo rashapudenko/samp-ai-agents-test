@@ -1,0 +1,88 @@
+# ================================================================
+# BACKEND QA ENVIRONMENT CONFIGURATION
+# ================================================================
+# This file contains QA-specific overrides for the base values.yaml
+# Usage: helm install backend . -f values.yaml -f values.qa.yaml
+
+# -- QA namespace
+namespace: backend-qa
+
+# -- QA replica count
+replicaCount: 2
+
+# -- QA image configuration
+image:
+  # -- QA registry and image
+  repository: "myqaacr.azurecr.io/backend-qa"
+  # -- Use specific tags for QA
+  pullPolicy: IfNotPresent
+  # -- Use QA tag
+  tag: "qa"
+
+# -- QA resource limits
+resources:
+  limits:
+    cpu: 750m
+    memory: 1.5Gi
+  requests:
+    cpu: 200m
+    memory: 384Mi
+
+# -- QA environment variables
+env:
+  enabled: true
+  variables:
+    LOG_LEVEL: "info"
+    DEBUG: "false"
+    APP_ENV: "qa"
+    PORT: "8000"
+    PYTHONPATH: "/app"
+
+# -- QA autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# -- QA PDB configuration
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# -- QA network policy
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vulnerability-rag-frontend
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to: []
+
+# -- QA security standards
+podSecurityStandards:
+  enabled: true
+  enforceBaseline: true
+  enforceRestricted: true
+
+# -- QA compliance
+compliance:
+  enabled: true
+  framework: "NIST"
+  level: "moderate"
+
+# -- QA Azure integration
+azureKeyVault:
+  enabled: false  # Can be enabled with proper configuration
+
+aks:
+  workloadIdentity:
+    enabled: false
+  topologySpreadConstraints:
+    enabled: true

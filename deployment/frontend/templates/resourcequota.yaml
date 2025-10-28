@@ -1,0 +1,102 @@
+{{- if .Values.resourceQuota.enabled }}
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ include "app.fullname" . }}-quota
+  {{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  hard:
+    {{- if .Values.resourceQuota.requests.cpu }}
+    requests.cpu: {{ .Values.resourceQuota.requests.cpu }}
+    {{- end }}
+    {{- if .Values.resourceQuota.requests.memory }}
+    requests.memory: {{ .Values.resourceQuota.requests.memory }}
+    {{- end }}
+    {{- if .Values.resourceQuota.limits.cpu }}
+    limits.cpu: {{ .Values.resourceQuota.limits.cpu }}
+    {{- end }}
+    {{- if .Values.resourceQuota.limits.memory }}
+    limits.memory: {{ .Values.resourceQuota.limits.memory }}
+    {{- end }}
+    {{- if .Values.resourceQuota.persistentvolumeclaims }}
+    persistentvolumeclaims: {{ .Values.resourceQuota.persistentvolumeclaims }}
+    {{- end }}
+    {{- if .Values.resourceQuota.pods }}
+    pods: {{ .Values.resourceQuota.pods }}
+    {{- end }}
+    {{- if .Values.resourceQuota.services }}
+    services: {{ .Values.resourceQuota.services }}
+    {{- end }}
+    {{- if .Values.resourceQuota.secrets }}
+    secrets: {{ .Values.resourceQuota.secrets }}
+    {{- end }}
+    {{- if .Values.resourceQuota.configmaps }}
+    configmaps: {{ .Values.resourceQuota.configmaps }}
+    {{- end }}
+---
+{{- end }}
+{{- if .Values.limitRange.enabled }}
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{ include "app.fullname" . }}-limits
+  {{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  limits:
+    {{- if .Values.limitRange.container }}
+    - type: Container
+      default:
+        {{- if .Values.limitRange.container.default.cpu }}
+        cpu: {{ .Values.limitRange.container.default.cpu }}
+        {{- end }}
+        {{- if .Values.limitRange.container.default.memory }}
+        memory: {{ .Values.limitRange.container.default.memory }}
+        {{- end }}
+      defaultRequest:
+        {{- if .Values.limitRange.container.defaultRequest.cpu }}
+        cpu: {{ .Values.limitRange.container.defaultRequest.cpu }}
+        {{- end }}
+        {{- if .Values.limitRange.container.defaultRequest.memory }}
+        memory: {{ .Values.limitRange.container.defaultRequest.memory }}
+        {{- end }}
+      max:
+        {{- if .Values.limitRange.container.max.cpu }}
+        cpu: {{ .Values.limitRange.container.max.cpu }}
+        {{- end }}
+        {{- if .Values.limitRange.container.max.memory }}
+        memory: {{ .Values.limitRange.container.max.memory }}
+        {{- end }}
+      min:
+        {{- if .Values.limitRange.container.min.cpu }}
+        cpu: {{ .Values.limitRange.container.min.cpu }}
+        {{- end }}
+        {{- if .Values.limitRange.container.min.memory }}
+        memory: {{ .Values.limitRange.container.min.memory }}
+        {{- end }}
+    {{- end }}
+    {{- if .Values.limitRange.pod }}
+    - type: Pod
+      max:
+        {{- if .Values.limitRange.pod.max.cpu }}
+        cpu: {{ .Values.limitRange.pod.max.cpu }}
+        {{- end }}
+        {{- if .Values.limitRange.pod.max.memory }}
+        memory: {{ .Values.limitRange.pod.max.memory }}
+        {{- end }}
+      min:
+        {{- if .Values.limitRange.pod.min.cpu }}
+        cpu: {{ .Values.limitRange.pod.min.cpu }}
+        {{- end }}
+        {{- if .Values.limitRange.pod.min.memory }}
+        memory: {{ .Values.limitRange.pod.min.memory }}
+        {{- end }}
+    {{- end }}
+{{- end }}

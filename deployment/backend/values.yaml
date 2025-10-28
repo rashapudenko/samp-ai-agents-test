@@ -1,0 +1,386 @@
+# ================================================================
+# VULNERABILITY RAG BACKEND - BASE CONFIGURATION
+# ================================================================
+# 
+# FastAPI backend service for Security Vulnerabilities RAG system
+# This is an internal service and should not be exposed externally
+#
+# Configuration Strategy:
+# - values.yaml: Base configuration with secure defaults
+# - values.[ENV].yaml: Environment specific overrides
+#
+# Usage:
+#   helm install backend . -f values.yaml -f values.[ENV].yaml
+# ================================================================
+
+# -- Namespace to deploy the application (leave empty for Release namespace)
+namespace: ""
+
+# -- Number of replicas for the deployment
+replicaCount: 2
+
+# ================================================================
+# IMAGE CONFIGURATION
+# ================================================================
+image:
+  # -- Container image repository
+  repository: "myregistry.azurecr.io/backend"
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion
+  tag: "latest"
+
+# -- Secrets for pulling images from private registries
+imagePullSecrets: []
+
+# ================================================================
+# APPLICATION NAMING
+# ================================================================
+# -- String to partially override app.fullname template (will maintain the release name)
+nameOverride: ""
+
+# -- String to fully override app.fullname template
+fullnameOverride: ""
+
+# ================================================================
+# SERVICE ACCOUNT & AZURE WORKLOAD IDENTITY
+# ================================================================
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use.
+  name: ""
+
+# ================================================================
+# POD SECURITY STANDARDS
+# ================================================================
+# -- Pod Security Standards configuration
+podSecurityStandards:
+  # -- Enable Pod Security Standards enforcement
+  enabled: true
+  # -- Enforce baseline Pod Security Standards
+  enforceBaseline: true
+  # -- Enforce restricted Pod Security Standards
+  enforceRestricted: true
+  # -- User ID for restricted mode
+  runAsUser: 1001
+  # -- Group ID for restricted mode
+  runAsGroup: 1001
+  # -- Filesystem group for restricted mode
+  fsGroup: 1001
+
+# ================================================================
+# POD CONFIGURATION
+# ================================================================
+# -- Annotations to add to the pod
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+# -- Labels to add to the pod
+podLabels: {}
+
+# -- Pod security context (enforces security best practices)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context (enforces security best practices)
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# ================================================================
+# SERVICE CONFIGURATION
+# ================================================================
+service:
+  # -- Service type (ClusterIP for internal services)
+  type: ClusterIP
+  # -- Service port
+  port: 80
+  # -- Container port (port your FastAPI application listens on)
+  containerPort: 8000
+  # -- Service annotations
+  annotations: {}
+
+# ================================================================
+# INGRESS CONFIGURATION
+# ================================================================
+ingress:
+  # -- Disable ingress for internal backend service
+  enabled: false
+
+# ================================================================
+# NETWORK SECURITY
+# ================================================================
+networkPolicy:
+  # -- Enable network policy for security
+  enabled: true
+  # -- Additional ingress rules (allow from frontend pods)
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vulnerability-rag-frontend
+      ports:
+        - protocol: TCP
+          port: 8000
+  # -- Additional egress rules (allow to external APIs and databases)
+  egress:
+    - to: []  # Allow all egress for external API calls
+
+# ================================================================
+# AZURE KEY VAULT SECRETS
+# ================================================================
+azureKeyVault:
+  # -- Enable Azure Key Vault integration for production secrets
+  enabled: false
+  # -- Use workload identity
+  useVMManagedIdentity: false
+  # -- Azure Key Vault name
+  vaultName: ""
+  # -- Azure client ID (for workload identity)
+  clientId: ""
+  # -- Azure tenant ID
+  tenantId: ""  
+  # -- Key-value mapping: AKV secret name -> K8s secret key name
+  secrets: {}
+
+# ================================================================
+# RESOURCE GOVERNANCE
+# ================================================================
+# -- Resource quota configuration
+resourceQuota:
+  # -- Enable resource quota
+  enabled: false
+
+# -- Limit range configuration
+limitRange:
+  # -- Enable limit range
+  enabled: false
+
+# ================================================================
+# RESOURCE MANAGEMENT
+# ================================================================
+# -- Resource limits and requests for backend service
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+# ================================================================
+# HEALTH CHECKS
+# ================================================================
+# -- Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 30
+
+# -- Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 10
+
+# -- Startup probe configuration
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  failureThreshold: 30
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 15
+
+# ================================================================
+# AUTOSCALING
+# ================================================================
+autoscaling:
+  # -- Enable horizontal pod autoscaler
+  enabled: true
+  # -- Minimum number of replicas
+  minReplicas: 2
+  # -- Maximum number of replicas
+  maxReplicas: 10
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 70
+  # -- Target memory utilization percentage  
+  targetMemoryUtilizationPercentage: 80
+
+# ================================================================
+# HIGH AVAILABILITY
+# ================================================================
+# -- Pod Disruption Budget configuration
+podDisruptionBudget:
+  # -- Enable pod disruption budget
+  enabled: true
+  # -- Minimum available pods
+  minAvailable: 1
+
+# ================================================================
+# APPLICATION CONFIGURATION
+# ================================================================
+# -- Environment variables configuration
+env:
+  # -- Enable environment variables from ConfigMap
+  enabled: true
+  # -- Environment variables
+  variables:
+    APP_ENV: "production"
+    LOG_LEVEL: "info"
+    PORT: "8000"
+    PYTHONPATH: "/app"
+
+# ================================================================
+# MONITORING & OBSERVABILITY
+# ================================================================
+monitoring:
+  # -- Enable monitoring
+  enabled: true
+  # -- ServiceMonitor configuration for Prometheus
+  serviceMonitor:
+    # -- ServiceMonitor labels
+    labels: {}
+    # -- ServiceMonitor annotations
+    annotations: {}
+    # -- Scrape interval
+    interval: 30s
+    # -- Scrape timeout
+    timeout: 10s
+    # -- Metrics path
+    path: /metrics
+    # -- Metrics port
+    port: http
+
+# ================================================================
+# COMPLIANCE & GOVERNANCE
+# ================================================================
+# -- Compliance configuration
+compliance:
+  # -- Enable compliance features
+  enabled: true
+  # -- Compliance framework
+  framework: "NIST"
+  # -- Compliance level
+  level: "moderate"
+
+# -- RBAC configuration
+rbac:
+  # -- Enable RBAC
+  enabled: true
+  # -- Enforce least privilege principle
+  leastPrivilege: true
+
+# ================================================================
+# DEPLOYMENT STRATEGY
+# ================================================================
+# -- Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+
+# -- Termination grace period in seconds
+terminationGracePeriodSeconds: 30
+
+# ================================================================
+# AKS-SPECIFIC OPTIMIZATIONS
+# ================================================================
+aks:
+  # -- Enable AKS-specific node selector for Linux nodes
+  nodeSelector:
+    kubernetes.io/os: linux
+  # -- AKS system tolerations for improved scheduling
+  tolerations: []
+  # -- AKS workload identity configuration
+  workloadIdentity:
+    # -- Enable AKS Workload Identity for production
+    enabled: false
+    annotations: {}
+    podLabels:
+      azure.workload.identity/use: 'true'
+  # -- AKS-optimized topology spread constraints
+  topologySpreadConstraints:
+    # -- Enable zone-aware pod distribution for HA
+    enabled: true
+    # -- Topology spread constraint configurations
+    constraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: vulnerability-rag-backend
+
+# ================================================================
+# KUBERNETES SCHEDULING
+# ================================================================
+# -- Additional node selector
+nodeSelector: {}
+
+# -- Tolerations for pod scheduling
+tolerations: []
+
+# -- Affinity for pod scheduling
+affinity: {}
+
+# -- Priority class for pod scheduling
+priorityClassName: ""
+
+# -- DNS configuration optimized for AKS
+dnsPolicy: ClusterFirst
+dnsConfig:
+  options:
+    - name: ndots
+      value: "2"
+    - name: edns0
+
+# ================================================================
+# STORAGE
+# ================================================================
+# -- Additional volumes for temporary storage
+volumes:
+  - name: tmp-volume
+    emptyDir: {}
+  - name: cache-volume
+    emptyDir: {}
+
+# -- Additional volume mounts
+volumeMounts:
+  - name: tmp-volume
+    mountPath: /tmp
+  - name: cache-volume
+    mountPath: /app/cache
