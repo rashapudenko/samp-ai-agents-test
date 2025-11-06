@@ -1,0 +1,212 @@
+{{- if .Values.compliance.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app.fullname" . }}-compliance
+  {{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+    compliance.samp.io/enabled: "true"
+  annotations:
+    compliance.samp.io/framework: {{ .Values.compliance.framework | quote }}
+    compliance.samp.io/level: {{ .Values.compliance.level | quote }}
+    compliance.samp.io/audit-enabled: {{ .Values.compliance.auditLogging | quote }}
+data:
+  compliance.yaml: |
+    compliance:
+      framework: {{ .Values.compliance.framework }}
+      level: {{ .Values.compliance.level }}
+      requirements:
+        {{- range .Values.compliance.requirements }}
+        - id: {{ .id }}
+          name: {{ .name }}
+          description: {{ .description }}
+          status: {{ .status }}
+          {{- if .evidence }}
+          evidence: {{ .evidence }}
+          {{- end }}
+        {{- end }}
+      auditLogging:
+        enabled: {{ .Values.compliance.auditLogging }}
+        {{- if .Values.compliance.auditLogging }}
+        logLevel: {{ .Values.compliance.auditLogLevel }}
+        destinations:
+          {{- range .Values.compliance.auditDestinations }}
+          - type: {{ .type }}
+            {{- if eq .type "azureLogAnalytics" }}
+            workspaceId: {{ .workspaceId }}
+            {{- else if eq .type "splunk" }}
+            endpoint: {{ .endpoint }}
+            {{- else if eq .type "elasticsearch" }}
+            endpoint: {{ .endpoint }}
+            index: {{ .index }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+  security-policies.yaml: |
+    securityPolicies:
+      podSecurityStandards:
+        enforced: {{ .Values.podSecurityStandards.enabled }}
+        level: {{ if .Values.podSecurityStandards.enforceRestricted }}"restricted"{{ else if .Values.podSecurityStandards.enforceBaseline }}"baseline"{{ else }}"privileged"{{ end }}
+      networkPolicies:
+        enabled: {{ .Values.networkPolicy.enabled }}
+        defaultDeny: {{ .Values.networkPolicy.defaultDeny | default false }}
+      secretsManagement:
+        azureKeyVault: {{ .Values.azureKeyVault.enabled }}
+        encryptionAtRest: {{ .Values.compliance.encryptionAtRest | default false }}
+      rbac:
+        enabled: {{ .Values.rbac.enabled | default true }}
+        leastPrivilege: {{ .Values.rbac.leastPrivilege | default true }}
+---
+{{- end }}
+{{- if and .Values.compliance.enabled .Values.compliance.auditLogging }}
+# Azure Monitor Agent DaemonSet for audit log collection
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "app.fullname" . }}-audit-collector
+  {{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+    component: audit-collector
+spec:
+  selector:
+    matchLabels:
+      {{- include "app.selectorLabels" . | nindent 6 }}
+      component: audit-collector
+  template:
+    metadata:
+      labels:
+        {{- include "app.selectorLabels" . | nindent 8 }}
+        component: audit-collector
+    spec:
+      serviceAccountName: {{ include "app.serviceAccountName" . }}
+      containers:
+      - name: fluent-bit
+        image: fluent/fluent-bit:2.2.0
+        env:
+        - name: AZURE_LOG_ANALYTICS_WORKSPACE_ID
+          value: {{ .Values.compliance.azureLogAnalytics.workspaceId | quote }}
+        - name: AZURE_LOG_ANALYTICS_SHARED_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "app.fullname" . }}-audit-secret
+              key: shared-key
+        - name: NAMESPACE
+          value: {{ .Release.Namespace | quote }}
+        - name: APP_NAME
+          value: {{ include "app.fullname" . | quote }}
+        volumeMounts:
+        - name: config
+          mountPath: /fluent-bit/etc/
+        - name: varlog
+          mountPath: /var/log
+          readOnly: true
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "app.fullname" . }}-audit-config
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app.fullname" . }}-audit-config
+  {{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         5
+        Log_Level     info
+        Daemon        off
+        Parsers_File  parsers.conf
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+
+    [INPUT]
+        Name              tail
+        Path              /var/log/containers/*{{ .Release.Namespace }}*.log
+        multiline.parser  docker, cri
+        Tag               kube.*
+        Mem_Buf_Limit     50MB
+        Skip_Long_Lines   On
+
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
+        Merge_Log           On
+        Keep_Log            Off
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+
+    [FILTER]
+        Name    grep
+        Match   kube.*
+        Regex   kubernetes.namespace_name {{ .Release.Namespace }}
+
+    [OUTPUT]
+        Name                    azure
+        Match                   kube.*
+        Customer_ID             ${AZURE_LOG_ANALYTICS_WORKSPACE_ID}
+        Shared_Key              ${AZURE_LOG_ANALYTICS_SHARED_KEY}
+        Log_Type                KubernetesAuditLog
+        Time_Key                @timestamp
+        Time_Generated          true
+
+  parsers.conf: |
+    [PARSER]
+        Name   docker
+        Format json
+        Time_Key time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "app.fullname" . }}-audit-secret
+  {{- if .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  {{- end }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+type: Opaque
+data:
+  shared-key: {{ .Values.compliance.azureLogAnalytics.sharedKey | b64enc }}
+{{- end }}

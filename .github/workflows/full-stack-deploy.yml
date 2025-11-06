@@ -1,0 +1,171 @@
+name: Full Stack Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment for deployment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      deploy_backend:
+        description: 'Deploy backend application'
+        required: false
+        default: true
+        type: boolean
+      deploy_frontend:
+        description: 'Deploy frontend application'
+        required: false
+        default: true
+        type: boolean
+      backend_image_tag:
+        description: 'Backend image tag (optional, defaults to latest main)'
+        required: false
+        type: string
+      frontend_image_tag:
+        description: 'Frontend image tag (optional, defaults to latest main)'
+        required: false
+        type: string
+
+env:
+  REGISTRY: myregistry.azurecr.io
+
+jobs:
+  # ================================================================
+  # DEPLOYMENT ORCHESTRATION
+  # ================================================================
+  deploy-full-stack:
+    name: Deploy Full Stack to ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: 
+      name: ${{ github.event.inputs.environment == 'dev' && 'development' || github.event.inputs.environment }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set image tags
+      id: tags
+      run: |
+        BACKEND_TAG="${{ github.event.inputs.backend_image_tag }}"
+        FRONTEND_TAG="${{ github.event.inputs.frontend_image_tag }}"
+        
+        # Use latest if not provided
+        if [ -z "$BACKEND_TAG" ]; then
+          BACKEND_TAG="latest"
+        fi
+        if [ -z "$FRONTEND_TAG" ]; then
+          FRONTEND_TAG="latest"
+        fi
+        
+        echo "backend-tag=$BACKEND_TAG" >> $GITHUB_OUTPUT
+        echo "frontend-tag=$FRONTEND_TAG" >> $GITHUB_OUTPUT
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ 
+          (github.event.inputs.environment == 'dev' && secrets.AZURE_CREDENTIALS_DEV) ||
+          (github.event.inputs.environment == 'staging' && secrets.AZURE_CREDENTIALS_STAGING) ||
+          (github.event.inputs.environment == 'prod' && secrets.AZURE_CREDENTIALS_PROD)
+        }}
+
+    - name: Get AKS credentials
+      run: |
+        RESOURCE_GROUP="${{ 
+          (github.event.inputs.environment == 'dev' && secrets.AKS_RESOURCE_GROUP_DEV) ||
+          (github.event.inputs.environment == 'staging' && secrets.AKS_RESOURCE_GROUP_STAGING) ||
+          (github.event.inputs.environment == 'prod' && secrets.AKS_RESOURCE_GROUP_PROD)
+        }}"
+        
+        CLUSTER_NAME="${{ 
+          (github.event.inputs.environment == 'dev' && secrets.AKS_CLUSTER_NAME_DEV) ||
+          (github.event.inputs.environment == 'staging' && secrets.AKS_CLUSTER_NAME_STAGING) ||
+          (github.event.inputs.environment == 'prod' && secrets.AKS_CLUSTER_NAME_PROD)
+        }}"
+        
+        az aks get-credentials --resource-group $RESOURCE_GROUP --name $CLUSTER_NAME
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+
+    - name: Deploy Backend
+      if: github.event.inputs.deploy_backend == 'true'
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        
+        helm upgrade --install backend-$ENV deployment/backend/ \
+          --namespace $ENV \
+          --create-namespace \
+          --values deployment/backend/values.yaml \
+          --values deployment/backend/values.$ENV.yaml \
+          --set image.tag=${{ steps.tags.outputs.backend-tag }} \
+          --wait --timeout=15m
+          
+        echo "✅ Backend deployed successfully to $ENV"
+
+    - name: Deploy Frontend
+      if: github.event.inputs.deploy_frontend == 'true'
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        
+        helm upgrade --install frontend-$ENV deployment/frontend/ \
+          --namespace $ENV \
+          --create-namespace \
+          --values deployment/frontend/values.yaml \
+          --values deployment/frontend/values.$ENV.yaml \
+          --set image.tag=${{ steps.tags.outputs.frontend-tag }} \
+          --wait --timeout=15m
+          
+        echo "✅ Frontend deployed successfully to $ENV"
+
+    - name: Verify Deployment
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        
+        echo "🔍 Verifying deployment in $ENV environment..."
+        
+        if [ "${{ github.event.inputs.deploy_backend }}" == "true" ]; then
+          kubectl get pods -n $ENV -l app.kubernetes.io/name=backend
+          kubectl rollout status deployment/backend-$ENV -n $ENV --timeout=300s
+          echo "✅ Backend verification complete"
+        fi
+        
+        if [ "${{ github.event.inputs.deploy_frontend }}" == "true" ]; then
+          kubectl get pods -n $ENV -l app.kubernetes.io/name=frontend
+          kubectl rollout status deployment/frontend-$ENV -n $ENV --timeout=300s
+          echo "✅ Frontend verification complete"
+        fi
+
+    - name: Run Health Checks
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        
+        echo "🏥 Running health checks..."
+        
+        if [ "${{ github.event.inputs.deploy_backend }}" == "true" ]; then
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=backend -n $ENV --timeout=300s
+          echo "✅ Backend health check passed"
+        fi
+        
+        if [ "${{ github.event.inputs.deploy_frontend }}" == "true" ]; then
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=frontend -n $ENV --timeout=300s
+          echo "✅ Frontend health check passed"
+        fi
+
+    - name: Deployment Summary
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        echo "🚀 Full Stack Deployment Summary"
+        echo "=================================="
+        echo "Environment: $ENV"
+        echo "Backend Deployed: ${{ github.event.inputs.deploy_backend }}"
+        echo "Frontend Deployed: ${{ github.event.inputs.deploy_frontend }}"
+        echo "Backend Image Tag: ${{ steps.tags.outputs.backend-tag }}"
+        echo "Frontend Image Tag: ${{ steps.tags.outputs.frontend-tag }}"
+        echo "=================================="
+        echo "✅ Deployment completed successfully!"

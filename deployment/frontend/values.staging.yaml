@@ -1,0 +1,132 @@
+# ================================================================
+# STAGING ENVIRONMENT CONFIGURATION - FRONTEND
+# ================================================================
+# This file contains staging-specific overrides for the base values.yaml
+# Usage: helm install frontend . -f values.yaml -f values.staging.yaml
+
+# -- Staging namespace
+namespace: staging
+
+# -- Moderate replica count for staging
+replicaCount: 2
+
+# -- Staging image configuration
+image:
+  # -- Pull if not present
+  pullPolicy: IfNotPresent
+  # -- Use staging tag
+  tag: "staging"
+
+# -- Staging ingress configuration
+ingress:
+  # -- Enable ingress for staging
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: security-vuln.staging.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: frontend-staging-tls
+      hosts:
+        - security-vuln.staging.example.com
+
+# -- Staging resource limits
+resources:
+  limits:
+    cpu: 400m
+    memory: 512Mi
+    ephemeral-storage: 800Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+    ephemeral-storage: 200Mi
+
+# -- Staging environment variables
+env:
+  enabled: true
+  variables:
+    NODE_ENV: "production"
+    NEXT_TELEMETRY_DISABLED: "1"
+    NEXT_PUBLIC_API_URL: "http://security-vuln-backend.staging.svc.cluster.local"
+
+# -- Staging health checks
+livenessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  failureThreshold: 3
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+# -- Staging autoscaling (limited)
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# -- Staging PDB for some availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# -- Staging network policy (moderate)
+networkPolicy:
+  enabled: true
+  ingress:
+    # Allow from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    # Allow to backend service
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: security-vuln-backend
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Allow DNS and HTTPS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+        - protocol: TCP
+          port: 443
+
+# -- Staging monitoring (enabled)
+monitoring:
+  enabled: true
+
+# -- Staging security (full enforcement)
+podSecurityStandards:
+  enabled: true
+  enforceBaseline: true
+  enforceRestricted: true
+
+# -- Staging compliance (basic)
+compliance:
+  enabled: true
+  framework: "NIST"
+  level: "moderate"
+
+aks:
+  workloadIdentity:
+    enabled: true
+  topologySpreadConstraints:
+    enabled: true

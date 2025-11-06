@@ -1,0 +1,250 @@
+# ================================================================
+# PRODUCTION ENVIRONMENT CONFIGURATION - FRONTEND
+# ================================================================
+# This file contains production-specific overrides for the base values.yaml
+# Usage: helm install frontend . -f values.yaml -f values.prod.yaml
+
+# -- Production namespace
+namespace: prod
+
+# -- High availability replica count
+replicaCount: 3
+
+# -- Production image configuration
+image:
+  # -- Never pull unless not present
+  pullPolicy: IfNotPresent
+  # -- Use specific version tag in production
+  tag: "v1.0.0"
+
+# -- Production ingress configuration
+ingress:
+  # -- Enable ingress for production
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+  hosts:
+    - host: security-vuln.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: frontend-prod-tls
+      hosts:
+        - security-vuln.example.com
+
+# -- Production resource limits
+resources:
+  limits:
+    cpu: 600m
+    memory: 1Gi
+    ephemeral-storage: 1Gi
+  requests:
+    cpu: 200m
+    memory: 512Mi
+    ephemeral-storage: 500Mi
+
+# -- Production environment variables
+env:
+  enabled: true
+  variables:
+    NODE_ENV: "production"
+    NEXT_TELEMETRY_DISABLED: "1"
+    NEXT_PUBLIC_API_URL: "http://security-vuln-backend.prod.svc.cluster.local"
+
+# -- Production health checks
+livenessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  failureThreshold: 3
+  successThreshold: 1
+  timeoutSeconds: 10
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+  successThreshold: 1
+  timeoutSeconds: 5
+
+startupProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 30
+  successThreshold: 1
+  timeoutSeconds: 5
+
+# -- Production autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+
+# -- Production PDB for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# -- Production network policy (strict)
+networkPolicy:
+  enabled: true
+  ingress:
+    # Allow only from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+    # Allow from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    # Allow to backend service only
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: security-vuln-backend
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Allow DNS resolution
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow HTTPS for CDN/external assets
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+
+# -- Production monitoring (full)
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    timeout: 10s
+    labels:
+      release: prometheus
+
+# -- Production security (full enforcement)
+podSecurityStandards:
+  enabled: true
+  enforceBaseline: true
+  enforceRestricted: true
+
+# -- Production compliance (enabled)
+compliance:
+  enabled: true
+  framework: "NIST"
+  level: "high"
+  auditLogging: true
+  auditLogLevel: "info"
+  requirements:
+    - id: "AC-2"
+      name: "Account Management"
+      description: "Manage information system accounts"
+      status: "implemented"
+      evidence: "RBAC and service accounts configured"
+    - id: "AC-3"
+      name: "Access Enforcement"
+      description: "Enforce approved authorizations"
+      status: "implemented"
+      evidence: "Network policies and RBAC enforced"
+    - id: "SC-8"
+      name: "Transmission Confidentiality"
+      description: "Protect communications"
+      status: "implemented"
+      evidence: "TLS encryption for all communications"
+
+# -- Production resource governance
+resourceQuota:
+  enabled: true
+  requests:
+    cpu: "10"
+    memory: "20Gi"
+  limits:
+    cpu: "20"
+    memory: "40Gi"
+  persistentvolumeclaims: "5"
+  pods: "30"
+  services: "10"
+  secrets: "20"
+  configmaps: "20"
+
+limitRange:
+  enabled: true
+  container:
+    default:
+      cpu: "300m"
+      memory: "256Mi"
+    defaultRequest:
+      cpu: "50m"
+      memory: "64Mi"
+    max:
+      cpu: "2"
+      memory: "4Gi"
+    min:
+      cpu: "10m"
+      memory: "32Mi"
+  pod:
+    max:
+      cpu: "4"
+      memory: "8Gi"
+    min:
+      cpu: "10m"
+      memory: "32Mi"
+
+# -- Production AKS configuration
+aks:
+  workloadIdentity:
+    enabled: true
+    annotations:
+      azure.workload.identity/client-id: "YOUR_FRONTEND_WORKLOAD_IDENTITY_CLIENT_ID"
+  topologySpreadConstraints:
+    enabled: true
+    constraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: security-vuln-frontend
+
+# -- Production priority class
+priorityClassName: "high-priority"
+
+# -- Production termination grace period
+terminationGracePeriodSeconds: 60
