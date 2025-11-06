@@ -1,17 +1,105 @@
-dev: 
-  - mydevacr.azurecr.io image registry
-  - image names are app names that suffixed with -dev
-  - working image tag is dev
-  - k8s namespace names are app names that suffixed with -dev
-
-qa: 
-  - myqaacr.azurecr.io image registry
-  - image names are app names that suffixed with -qa
-  - working image tag is qa
-  - k8s namespace names are app names that suffixed with -qa
-
-prod: 
-  - myprodacr.azurecr.io image registry
-  - image names are app names that suffixed with -prod
-  - working image tag is prod
-  - k8s namespace names are app names that suffixed with -prod
+# Application Deployment Best Practices
+ 
+## Helm Chart Standards
+ 
+- Use Helm charts to define, install, and upgrade complex Kubernetes applications.
+- Helm charts must be created in the application repository at `{root_folder}/deployment/`.
+- Follow semantic versioning for Helm chart versions (e.g., 1.0.0, 1.1.0).
+- Include a comprehensive `README.md` in the deployment folder explaining chart usage and configuration options.
+- Define sensible defaults in `values.yaml` that work for all environments.
+ 
+## Environment Configuration
+ 
+- Use environment-specific Helm values files to manage configurations for different environments.
+- Values files should be named: `values.[environment_short_name].yaml`, e.g., `values.dev.yaml`, `values.staging.yaml`, `values.prod.yaml`.
+- Store environment-specific secrets using external secret management solutions (Azure Key Vault) and CSI Secrets Store Driver configuration.
+- Never commit sensitive credentials or API keys to the repository.
+ 
+## Supported Environments
+ 
+- **Development**: Used for active development and testing by developers. Short name: `dev`.
+- **Staging**: Pre-production environment that mirrors production configuration. Short name: `staging`.
+- **Production**: Live environment serving end users. Short name: `prod`.
+- **Demo**: Optional environment for showcasing features to stakeholders. Short name: `demo`.
+ 
+## Namespace Management
+ 
+- Namespace for each application must equal the short environment name, e.g. (`dev`, `staging`, `prod`).
+- Use Kubernetes labels to identify resources by application, environment, and team.
+ 
+## Container Image Standards
+ 
+- Use semantic versioning for container image tags.
+- Never use `latest` tag in staging or production environments.
+- Implement container image scanning for vulnerabilities before deployment.
+- Store container images in a private container registry.
+- Use multi-stage Docker builds to minimize image size.
+ 
+## Deployment Strategy
+ 
+- Use rolling updates as the default deployment strategy.
+- Configure appropriate readiness and liveness probes for all containers.
+- Define resource requests and limits for CPU and memory.
+- Implement Pod Disruption Budgets (PDBs) for critical applications.
+- Use Horizontal Pod Autoscaler (HPA) for applications that need to scale based on load.
+ 
+## Configuration Management
+ 
+- Use ConfigMaps for non-sensitive configuration data.
+- Use Secrets for sensitive data (API keys, passwords, certificates).
+- Externalize all environment-specific configuration from application code.
+- Support configuration hot-reloading where possible.
+ 
+## Networking
+ 
+- Use Kubernetes Services for internal service discovery.
+- Implement Ingress controllers for external traffic routing.
+- Use Network Policies to control traffic between pods.
+- Configure TLS/SSL certificates for all external endpoints.
+- Use DNS names instead of IP addresses for service communication.
+ 
+## Monitoring and Observability
+ 
+- Include Prometheus metrics endpoints in all applications.
+- Configure health check endpoints (`/health`, `/ready`).
+- Implement structured logging with appropriate log levels.
+- Use distributed tracing for microservices architectures.
+- Set up alerts for critical application and infrastructure metrics.
+ 
+## Security
+ 
+- Run containers as non-root users.
+- Use Pod Security Standards (restricted profile recommended).
+- Implement RBAC policies following the principle of least privilege.
+- Enable audit logging for the Kubernetes cluster.
+- Regularly update base container images and dependencies.
+- Scan Helm charts for security issues using tools like Checkov or Trivy.
+ 
+## CI/CD Integration
+ 
+- Automate Helm chart linting using `helm lint` in CI pipelines.
+- Validate Kubernetes manifests using `kubectl --dry-run` before deployment.
+- Implement automated testing of Helm charts (unit tests, integration tests).
+- Use GitOps principles for deployment automation.
+- Require pull request reviews for changes to deployment configurations.
+ 
+## Documentation
+ 
+- Maintain up-to-date architecture diagrams for deployed applications.
+- Document all custom Helm values and their purposes.
+- Include rollback procedures in deployment documentation.
+- Document inter-service dependencies and communication patterns.
+ 
+## Backup and Disaster Recovery
+ 
+- Implement regular backups of persistent data.
+- Document and test disaster recovery procedures.
+- Define Recovery Time Objective (RTO) and Recovery Point Objective (RPO) for each application.
+- Use multi-region deployments for critical production applications.
+ 
+## Compliance
+ 
+- Tag all resources with required metadata (cost center, owner, purpose).
+- Implement data residency requirements as needed.
+- Maintain compliance with industry standards (SOC2, HIPAA, etc.) where applicable.
+- Conduct regular security audits of deployed applications.
