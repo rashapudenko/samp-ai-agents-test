@@ -1,0 +1,117 @@
+# ================================================================
+# STAGING ENVIRONMENT CONFIGURATION - BACKEND
+# ================================================================
+# This file contains staging-specific overrides for the base values.yaml
+# Usage: helm install backend . -f values.yaml -f values.staging.yaml
+
+# -- Staging namespace
+namespace: staging
+
+# -- Moderate replica count for staging
+replicaCount: 2
+
+# -- Staging image configuration
+image:
+  # -- Pull if not present
+  pullPolicy: IfNotPresent
+  # -- Use staging tag
+  tag: "staging"
+
+# -- Staging resource limits
+resources:
+  limits:
+    cpu: 750m
+    memory: 1Gi
+    ephemeral-storage: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+    ephemeral-storage: 250Mi
+
+# -- Staging environment variables
+env:
+  enabled: true
+  variables:
+    LOG_LEVEL: "info"
+    DEBUG: "false"
+    ENVIRONMENT: "staging"
+
+# -- Staging health checks
+livenessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  failureThreshold: 3
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+# -- Staging autoscaling (limited)
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# -- Staging PDB for some availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# -- Staging network policy (moderate)
+networkPolicy:
+  enabled: true
+  ingress:
+    # Allow from frontend and monitoring
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: security-vuln-frontend
+      ports:
+        - protocol: TCP
+          port: 8000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8000
+
+# -- Staging monitoring (enabled)
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+
+# -- Staging security (full enforcement)
+podSecurityStandards:
+  enabled: true
+  enforceBaseline: true
+  enforceRestricted: true
+
+# -- Staging compliance (basic)
+compliance:
+  enabled: true
+  framework: "NIST"
+  level: "moderate"
+  auditLogging: true
+
+# -- Staging Azure integration
+azureKeyVault:
+  enabled: true
+  useVMManagedIdentity: false
+  vaultName: "staging-keyvault"
+  secrets:
+    azure-openai-api-key: AZURE_OPENAI_API_KEY
+    azure-openai-endpoint: AZURE_OPENAI_ENDPOINT
+    database-connection: DATABASE_URL
+
+aks:
+  workloadIdentity:
+    enabled: true
+  topologySpreadConstraints:
+    enabled: true

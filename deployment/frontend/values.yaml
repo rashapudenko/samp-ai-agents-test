@@ -1,0 +1,459 @@
+# ================================================================
+# PRODUCTION-READY FRONTEND WEB APPLICATION HELM CHART
+# ================================================================
+# 
+# Security Vulnerabilities Knowledge Base - Frontend (Next.js)
+# Configuration Strategy:
+# - values.yaml: Base configuration with secure defaults
+# - values.[ENV].yaml: Environment specific overrides
+#
+# Usage:
+#   helm install frontend . -f values.yaml -f values.[ENV].yaml
+# ================================================================
+
+# -- Namespace to deploy the application (leave empty for Release namespace)
+namespace: ""
+
+# -- Number of replicas for the deployment
+replicaCount: 1
+
+# ================================================================
+# IMAGE CONFIGURATION
+# ================================================================
+image:
+  # -- Container image repository
+  repository: "myregistry.azurecr.io/security-vuln-frontend"
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion
+  tag: "latest"
+
+# -- Secrets for pulling images from private registries
+imagePullSecrets: []
+
+# ================================================================
+# APPLICATION NAMING
+# ================================================================
+# -- String to partially override app.fullname template (will maintain the release name)
+nameOverride: ""
+
+# -- String to fully override app.fullname template
+fullnameOverride: ""
+
+# ================================================================
+# SERVICE ACCOUNT & AZURE WORKLOAD IDENTITY
+# ================================================================
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use.
+  name: ""
+
+# ================================================================
+# POD SECURITY STANDARDS
+# ================================================================
+# -- Pod Security Standards configuration
+podSecurityStandards:
+  # -- Enable Pod Security Standards enforcement
+  enabled: true
+  # -- Enforce baseline Pod Security Standards
+  enforceBaseline: true
+  # -- Enforce restricted Pod Security Standards
+  enforceRestricted: true
+  # -- User ID for restricted mode (matches Dockerfile user)
+  runAsUser: 1001
+  # -- Group ID for restricted mode
+  runAsGroup: 1001
+  # -- Filesystem group for restricted mode
+  fsGroup: 1001
+
+# ================================================================
+# POD CONFIGURATION
+# ================================================================
+# -- Annotations to add to the pod
+podAnnotations: {}
+
+# -- Labels to add to the pod
+podLabels: {}
+
+# -- Pod security context (enforces security best practices)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context (enforces security best practices)
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# ================================================================
+# SERVICE CONFIGURATION
+# ================================================================
+service:
+  # -- Service type
+  type: ClusterIP
+  # -- Service port
+  port: 80
+  # -- Container port (port your application listens on)
+  containerPort: 3000
+  # -- Service annotations
+  annotations: {}
+
+# ================================================================
+# INGRESS CONFIGURATION (ENABLED - PUBLIC FACING)
+# ================================================================
+ingress:
+  # -- Enable ingress (enabled for public-facing frontend)
+  enabled: true
+  # -- Ingress class name (nginx, traefik, etc.)
+  className: "nginx"
+  # -- Ingress annotations
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  # -- Ingress hosts configuration
+  hosts:
+    - host: security-vuln.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # -- Ingress TLS configuration
+  tls: []
+  #  - secretName: frontend-tls
+  #    hosts:
+  #      - security-vuln.example.com
+
+# ================================================================
+# NETWORK SECURITY
+# ================================================================
+networkPolicy:
+  # -- Enable network policy
+  enabled: false
+  # -- Additional ingress rules
+  ingress: []
+  # -- Additional egress rules  
+  egress: []
+
+# ================================================================
+# AZURE KEY VAULT SECRETS (Secret Provider Class)
+# ================================================================
+azureKeyVault:
+  # -- Enable Azure Key Vault integration
+  enabled: false
+  # -- Use VM managed identity (if false, uses workload identity)
+  useVMManagedIdentity: false
+  # -- Azure Key Vault name
+  vaultName: ""
+  # -- Azure client ID (for workload identity)
+  clientId: ""
+  # -- Azure tenant ID
+  tenantId: ""  
+  # -- Key-value mapping: AKV secret name -> K8s secret key name
+  secrets: {}
+
+# ================================================================
+# RESOURCE GOVERNANCE
+# ================================================================
+# -- Resource quota configuration
+resourceQuota:
+  # -- Enable resource quota
+  enabled: false
+  # -- Resource requests quotas
+  requests:
+    cpu: "4"
+    memory: "8Gi"
+  # -- Resource limits quotas
+  limits:
+    cpu: "8"
+    memory: "16Gi"
+  # -- Additional resource quotas
+  persistentvolumeclaims: "4"
+  pods: "10"
+  services: "5"
+  secrets: "10"
+  configmaps: "10"
+
+# -- Limit range configuration
+limitRange:
+  # -- Enable limit range
+  enabled: false
+  # -- Container limits
+  container:
+    default:
+      cpu: "300m"
+      memory: "256Mi"
+    defaultRequest:
+      cpu: "50m"
+      memory: "64Mi"
+    max:
+      cpu: "1"
+      memory: "2Gi"
+    min:
+      cpu: "10m"
+      memory: "32Mi"
+  # -- Pod limits
+  pod:
+    max:
+      cpu: "2"
+      memory: "4Gi"
+    min:
+      cpu: "10m"
+      memory: "32Mi"
+
+# ================================================================
+# RESOURCE MANAGEMENT
+# ================================================================
+# -- Resource limits and requests (Frontend optimized)
+resources:
+  limits:
+    cpu: 300m
+    memory: 256Mi
+    ephemeral-storage: 500Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+    ephemeral-storage: 100Mi
+
+# ================================================================
+# HEALTH CHECKS
+# ================================================================
+# -- Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 30
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 30
+
+# -- Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+    scheme: HTTP
+  failureThreshold: 3
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 5
+
+# -- Startup probe configuration
+startupProbe:
+  httpGet:
+    path: /
+    port: http
+    scheme: HTTP
+  failureThreshold: 30
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 5
+  initialDelaySeconds: 10
+
+# ================================================================
+# AUTOSCALING
+# ================================================================
+autoscaling:
+  # -- Enable horizontal pod autoscaler
+  enabled: false
+  # -- Minimum number of replicas
+  minReplicas: 1
+  # -- Maximum number of replicas
+  maxReplicas: 10
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 70
+  # -- Target memory utilization percentage  
+  targetMemoryUtilizationPercentage: 80
+  # -- Custom metrics for autoscaling
+  metrics: []
+  # -- Behavior configuration for autoscaling
+  behavior: {}
+
+# ================================================================
+# HIGH AVAILABILITY
+# ================================================================
+# -- Pod Disruption Budget configuration
+podDisruptionBudget:
+  # -- Enable pod disruption budget
+  enabled: false
+  # -- Minimum available pods
+  minAvailable: 1
+
+# ================================================================
+# APPLICATION CONFIGURATION
+# ================================================================
+# -- Environment variables configuration
+env:
+  # -- Enable environment variables from ConfigMap
+  enabled: true
+  # -- Environment variables
+  variables:
+    NODE_ENV: "production"
+    NEXT_TELEMETRY_DISABLED: "1"
+    NEXT_PUBLIC_API_URL: "http://security-vuln-backend"
+
+# -- Extra environment variables from secrets or configmaps
+extraEnvFrom: []
+
+# -- Extra environment variables
+extraEnv: []
+
+# ================================================================
+# ADVANCED CONFIGURATION
+# ================================================================
+# -- Init containers
+initContainers: []
+
+# -- Sidecar containers
+sidecars: []
+
+# ================================================================
+# MONITORING & OBSERVABILITY
+# ================================================================
+monitoring:
+  # -- Enable monitoring
+  enabled: false
+  # -- ServiceMonitor configuration for Prometheus
+  serviceMonitor:
+    # -- ServiceMonitor labels
+    labels: {}
+    # -- ServiceMonitor annotations
+    annotations: {}
+    # -- Scrape interval
+    interval: 30s
+    # -- Scrape timeout
+    timeout: 10s
+    # -- Metrics path
+    path: /metrics
+    # -- Metrics port
+    port: http
+
+# ================================================================
+# COMPLIANCE & GOVERNANCE
+# ================================================================
+# -- Compliance configuration
+compliance:
+  # -- Enable compliance features
+  enabled: false
+  # -- Compliance framework (NIST, SOC2, PCI-DSS, HIPAA, GDPR)
+  framework: "NIST"
+  # -- Compliance level (baseline, moderate, high)
+  level: "moderate"
+  # -- Enable audit logging
+  auditLogging: false
+
+# -- RBAC configuration
+rbac:
+  # -- Enable RBAC
+  enabled: true
+  # -- Enforce least privilege principle
+  leastPrivilege: true
+
+# ================================================================
+# DEPLOYMENT STRATEGY
+# ================================================================
+# -- Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+
+# -- Pod lifecycle hooks
+lifecycle: {}
+
+# -- Termination grace period in seconds
+terminationGracePeriodSeconds: 30
+
+# ================================================================
+# AKS-SPECIFIC OPTIMIZATIONS
+# ================================================================
+aks:
+  # -- Enable AKS-specific node selector for Linux nodes
+  nodeSelector:
+    kubernetes.io/os: linux
+  # -- AKS system tolerations for improved scheduling
+  tolerations: []
+  # -- AKS workload identity configuration
+  workloadIdentity:
+    # -- Enable AKS Workload Identity
+    enabled: false
+    # -- Service account annotations for workload identity
+    annotations: {}
+    podLabels:
+      azure.workload.identity/use: 'true'
+  # -- AKS-optimized topology spread constraints
+  topologySpreadConstraints:
+    # -- Enable zone-aware pod distribution for HA
+    enabled: false
+    # -- Topology spread constraint configurations
+    constraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: security-vuln-frontend
+
+# ================================================================
+# KUBERNETES SCHEDULING
+# ================================================================
+# -- Additional node selector (merged with AKS node selector)
+nodeSelector: {}
+
+# -- Tolerations for pod scheduling
+tolerations: []
+
+# -- Affinity for pod scheduling
+affinity: {}
+
+# -- Topology spread constraints (additional to AKS optimizations)
+topologySpreadConstraints: []
+
+# -- Priority class for pod scheduling
+priorityClassName: ""
+
+# -- DNS configuration optimized for AKS
+dnsPolicy: ClusterFirst
+dnsConfig:
+  options:
+    # Optimize DNS resolution for AKS
+    - name: ndots
+      value: "2"
+    - name: edns0
+
+# ================================================================
+# STORAGE
+# ================================================================
+# -- Additional volumes
+volumes:
+  - name: tmp-storage
+    emptyDir: {}
+  - name: nextjs-cache
+    emptyDir: {}
+
+# -- Additional volume mounts
+volumeMounts:
+  - name: tmp-storage
+    mountPath: /tmp
+    readOnly: false
+  - name: nextjs-cache
+    mountPath: /app/.next/cache
+    readOnly: false
